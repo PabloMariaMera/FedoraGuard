@@ -1,0 +1,34 @@
+#!/bin/bash
+
+# Script FedoraGuard
+# Usage: FedoraGuard generate|applynow
+
+# Check that exactly one parameter was passed
+if [ "$#" -ne 1 ]; then
+    echo "Usage: $0  generate | applynow"
+    exit 1
+fi
+
+# Execute the corresponding script based on the parameter
+case "$1" in
+    generate)
+        if [ -f "generateISO.py" ]; then
+            python3 generateISO.py
+        else
+            echo "Error: generateISO.py not found."
+            exit 1
+        fi
+        ;;
+    applynow)
+        if [ -f "applyNow.py" ]; then
+            python3 applyNow.py
+        else
+            echo "Error: applyNow.py not found."
+            exit 1
+        fi
+        ;;
+    *)
+        echo "Unrecognized parameter. Use 'generate' or 'applynow'."
+        exit 1
+        ;;
+esac

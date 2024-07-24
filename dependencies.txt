@@ -1,0 +1,17 @@
+1. Download the project
+
+2. Install dependencies:
+    python3
+    wget
+    genisoimage
+    syslinux
+    isomd5sum
+    fuse
+    fuseiso
+    pykickstart
+
+3. Run the application:
+    3a. Generate image:
+        ./FedoraGuard generate
+    3b. Apply hardening:
+        ./FedoraGuard applynow
