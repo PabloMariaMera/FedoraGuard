@@ -56,6 +56,7 @@ def extract_iso(iso_path, extract_to):
         if os.path.exists(parent_mount_dir):
             shutil.rmtree(parent_mount_dir)
     
+    os.chmod(extract_to, 0o777)  # Ensure the directory is writable
     for root, dirs, files in os.walk(extract_to):
         for dir in dirs:
             os.chmod(os.path.join(root, dir), 0o777)
