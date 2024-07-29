@@ -38,6 +38,7 @@ def download_iso(url, output):
 def extract_iso(iso_path, extract_to):
     if os.path.exists(extract_to):
         print(f"Directory {extract_to} already exists. Skipping extraction.")
+        os.chmod(extract_to, 0o777)  # Ensure the directory is writable
     else:
         print(f"Extracting ISO {iso_path} to {extract_to}...")
         os.makedirs(extract_to, exist_ok=True)
@@ -54,17 +55,43 @@ def extract_iso(iso_path, extract_to):
         parent_mount_dir = os.path.dirname(mount_point)
         if os.path.exists(parent_mount_dir):
             shutil.rmtree(parent_mount_dir)
-
-def add_kickstart(extract_to, kickstart_path):
-    print(f"Adding Kickstart file {kickstart_path} to {extract_to}...")
-    dest_path = os.path.join(extract_to, "ks.cfg")
-    os.chmod(extract_to, 0o777)  # Ensure the directory is writable
+    
     for root, dirs, files in os.walk(extract_to):
         for dir in dirs:
             os.chmod(os.path.join(root, dir), 0o777)
         for file in files:
             os.chmod(os.path.join(root, file), 0o666)
-    shutil.copy(kickstart_path, dest_path)
+
+def validate_kickstart(kickstart_path):
+    # Ensure the kickstart files are in UTF-8 encoding
+    for root, dirs, files in os.walk(kickstart_path):
+        for file in files:
+            file_path = os.path.join(root, file)
+            print(f"Validating and converting Kickstart file {file_path} to UTF-8 encoding...")
+            with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                content = f.read()
+
+            with open(file_path, 'w', encoding='utf-8') as f:
+                f.write(content)
+
+            # Validate each kickstart file using ksvalidator
+            try:
+                run_command(f"ksvalidator {file_path}")
+                print(f"Kickstart file {file_path} is valid.")
+            except subprocess.CalledProcessError as e:
+                print(f"Kickstart validation failed for {file_path}: {e.output}")
+                sys.exit(1)
+
+def add_kickstart_folder(extract_to, kickstart_folder):
+    # Validate the kickstart files before adding them
+    validate_kickstart(kickstart_folder)
+
+    print(f"Adding Kickstart folder {kickstart_folder} to {extract_to}...")
+    dest_path = os.path.join(extract_to, "kickstarts")
+    if os.path.exists(dest_path):
+        shutil.rmtree(dest_path)  # Remove any existing kickstarts folder
+
+    shutil.copytree(kickstart_folder, dest_path)
 
 def modify_boot_config(extract_to, volume_label, os_name, os_version):
     print(f"Modifying boot configuration in {extract_to}...")
@@ -85,7 +112,7 @@ def modify_boot_config(extract_to, volume_label, os_name, os_version):
         file.write(f"LABEL install\n")
         file.write(f"    MENU LABEL INSTALL FedoraGuard {os_name} {os_version}\n")
         file.write(f"    KERNEL vmlinuz\n")
-        file.write(f"    APPEND initrd=initrd.img rd.live.check=0 inst.stage2=hd:LABEL={volume_label} inst.ks=cdrom:/ks.cfg\n")
+        file.write(f"    APPEND initrd=initrd.img rd.live.check=0 inst.stage2=hd:LABEL={volume_label} inst.ks=cdrom:/kickstarts/main.ks\n")
 
 def create_iso(extract_to, output_iso, volume_label):
     print(f"Creating new ISO {output_iso} from {extract_to}...")
@@ -101,10 +128,6 @@ def get_volume_label(iso_path):
     match = re.search(r"Volume id:\s*(\S+)", output)
     return match.group(1) if match else "UNKNOWN"
 
-def clean_temp_directory(directory):
-    if os.path.exists(directory):
-        shutil.rmtree(directory)
-
 def main():
     # Directories for original and custom ISOs
     original_iso_dir = os.path.join(os.getcwd(), "original_iso")
@@ -117,7 +140,6 @@ def main():
     fedora_versions = {
         "28": "https://archives.fedoraproject.org/pub/archive/fedora/linux/releases/28/Server/x86_64/iso/Fedora-Server-dvd-x86_64-28-1.1.iso",
         "34": "https://archives.fedoraproject.org/pub/archive/fedora/linux/releases/34/Server/x86_64/iso/Fedora-Server-dvd-x86_64-34-1.2.iso"
- 
     }
 
     print("Select distribution:")
@@ -125,7 +147,7 @@ def main():
     print("2. Red Hat Enterprise Linux (RHEL)")
     choice = input("Enter your choice (1 or 2): ").strip()
     
-    kickstart_path = "kickstarts/test.ks"
+    kickstart_folder = "kickstarts"
     # kickstart_path = input("Enter the path to your Kickstart file: ").strip()
     # if not os.path.isfile(kickstart_path):
     #     print("Kickstart file not found")
@@ -155,7 +177,7 @@ def main():
 
         download_iso(iso_url, downloaded_iso)
         extract_iso(downloaded_iso, extract_to)
-        add_kickstart(extract_to, kickstart_path)
+        add_kickstart_folder(extract_to, kickstart_folder)
         modify_boot_config(extract_to, volume_label, "Fedora", fedora_version)
         create_iso(extract_to, output_iso, volume_label)
         implantmd5(output_iso)
@@ -177,7 +199,7 @@ def main():
         volume_label = "FedoraGuard"
 
         extract_iso(downloaded_iso, extract_to)
-        add_kickstart(extract_to, kickstart_path)
+        add_kickstart_folder(extract_to, kickstart_folder)
         modify_boot_config(extract_to, volume_label, "Red Hat", rhel_version)
         create_iso(extract_to, output_iso, volume_label)
         implantmd5(output_iso)
