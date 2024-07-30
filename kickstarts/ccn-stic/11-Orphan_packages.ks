@@ -1,4 +1,4 @@
-%post --log=/root/logs/11-orphan_packages.ks
+%post --log=/root/logs/11-Orphan_packages.ks
 #!/bin/bash
 echo "---------------------------------"
 echo "--ELIMINANDO PAQUETES HUÉRFANOS--"

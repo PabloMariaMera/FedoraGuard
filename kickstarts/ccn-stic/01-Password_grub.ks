@@ -1,4 +1,5 @@
 %post --log=/root/logs/01-Password_grub.ks
+#!/bin/bash
 
 echo "--------------------------------"
 echo "--APLICANDO CONTRASEÑA DE GRUB--"

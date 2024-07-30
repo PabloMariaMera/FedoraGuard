@@ -1,4 +1,4 @@
-%post --log=/root/logs/10-.unnecessary_items_efi.ks
+%post --log=/root/logs/10-Unnecessary_items_efi.ks
 #!/bin/bash
 echo "----------------------------------------------------"
 echo "-- SE ELIMINARÁN PROGRAMAS Y DRIVERS INNECESARIOS --"
@@ -108,6 +108,18 @@ systemctl mask serial-getty@.service
 # Necesario DNS systemctl mask systemd-resolved.service
 systemctl mask tuned.service
 
+##########################################################################################
+echo "-------------------------------------------------"
+echo "-- SE BLOQUEARÁN LOS COMPILADORES DEL SISTEMA  --"
+echo "-------------------------------------------------"
+sudo chmod 000 /usr/bin/byacc 2>>/dev/null
+sudo chmod 000 /usr/bin/yacc 2>>/dev/null
+sudo chmod 000 /usr/bin/bcc 2>>/dev/null
+sudo chmod 000 /usr/bin/kgcc 2>>/dev/null
+sudo chmod 000 /usr/bin/cc 2>>/dev/null
+sudo chmod 000 /usr/bin/gcc 2>>/dev/null
+sudo chmod 000 /usr/bin/*c++ 2>>/dev/null
+sudo chmod 000 /usr/bin/*g++ 2>>/dev/null
 
 %end
 

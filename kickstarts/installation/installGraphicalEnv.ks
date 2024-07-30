@@ -29,6 +29,6 @@ else
     echo "El archivo /etc/system-release no existe."
 fi
 
-dnf install policycoreutils-python-utils -y
+dnf install policycoreutils-python-utils usbguard -y
 
 %end

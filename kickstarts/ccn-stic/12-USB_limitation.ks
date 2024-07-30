@@ -1,4 +1,4 @@
-%post --log=/root/logs/12-usb_limitation.ks
+%post --log=/root/logs/12-USB_limitation.ks
 #!/bin/bash
 
 #evitando usb 

@@ -26,12 +26,12 @@ lang en_US.UTF-8
 #
 # Root password
 #
-rootpw --plaintext tbd
+rootpw --plaintext root
 
 #
 # Users
 #
-user --name=tbd --password=tbd --gecos="tbd"
+user --name=user --password=user --gecos="user"
 
 #
 # Timezone
@@ -65,10 +65,10 @@ network --bootproto=dhcp
 %include /run/install/repo/kickstarts/ccn-stic/04-Parameters_SSH.ks
 %include /run/install/repo/kickstarts/ccn-stic/05-Handling_register_activity.ks
 %include /run/install/repo/kickstarts/ccn-stic/06-Uninstall_no_needed_users.ks
-%include /run/install/repo/kickstarts/ccn-stic/07-failed_attempts.ks
+%include /run/install/repo/kickstarts/ccn-stic/07-Failed_attempts.ks
 %include /run/install/repo/kickstarts/ccn-stic/08-Limits_permissions_passExpiration.ks
 %include /run/install/repo/kickstarts/ccn-stic/09-Parameters_gnome.ks
-%include /run/install/repo/kickstarts/ccn-stic/10-unnecessary_items_efi.ks
-%include /run/install/repo/kickstarts/ccn-stic/11-orphan_packages.ks
-%include /run/install/repo/kickstarts/ccn-stic/12-usb_limitation.ks
+%include /run/install/repo/kickstarts/ccn-stic/10-Unnecessary_items_efi.ks
+%include /run/install/repo/kickstarts/ccn-stic/11-Orphan_packages.ks
+%include /run/install/repo/kickstarts/ccn-stic/12-USB_limitation.ks
 %include /run/install/repo/kickstarts/ccn-stic/13-Antivirus_install.ks

@@ -1,4 +1,5 @@
 %post --log=/root/logs/09-Parameters_gnome.ks
+#!/bin/bash
 echo "------------------------------------------------------------------"
 echo "--CREANDO UN BANNER Y MODIFICANDO PARÁMETROS DE INICIO DE SESIÓN--"
 echo "------------------------------------------------------------------"

@@ -1,4 +1,4 @@
-%post --log=/root/logs/07-failed_attempts.ks
+%post --log=/root/logs/07-Failed_attempts.ks
 #!/bin/bash
 echo "--------------------------------------------"
 echo "--BLOQUEO DE CUENTAS POR INTENTOS FALLIDOS--"

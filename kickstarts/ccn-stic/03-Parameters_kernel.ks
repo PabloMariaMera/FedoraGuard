@@ -42,10 +42,10 @@ cat >> /etc/sysctl.conf << EOF
 # PARÁMETROS REVISABLES
 # ----------------------
 # Deshabilitar ping
-#net.ipv4.icmp_echo_ignore_all = 1
+net.ipv4.icmp_echo_ignore_all = 1
 ###
 # Paquetes entre interfaces (desactivar si el equipo no actúa como router)
-#net.ipv4.ip_forward = 0
+net.ipv4.ip_forward = 0
 ###
 # Habilitar reverse path filtering
 #net.ipv4.conf.all.rp_filter = 1
@@ -55,8 +55,8 @@ cat >> /etc/sysctl.conf << EOF
 #net.ipv4.tcp_timestamps = 0
 ###
 #Bloqueo de ipv6
-#net.ipv6.conf.all.disable_ipv6 = 1
-#net.ipv6.conf.default.disable_ipv6 = 1
+net.ipv6.conf.all.disable_ipv6 = 1
+net.ipv6.conf.default.disable_ipv6 = 1
 ###
 # Modificar el tamaño de las colas de espera de TCP
 ###
