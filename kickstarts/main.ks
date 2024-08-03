@@ -11,7 +11,8 @@ zerombr
 #
 # Graphical or text installation
 #
-text
+graphical
+#text
 
 #
 # Keyboard
@@ -49,6 +50,8 @@ timezone UTC
 # Network
 #
 network --bootproto=dhcp
+
+%include /run/install/repo/kickstarts/installation/graphical-progress.ks
 
 #
 # Scripts

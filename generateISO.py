@@ -65,10 +65,10 @@ def extract_iso(iso_path, extract_to):
 
 def validate_kickstart(kickstart_path):
     # Ensure the kickstart files are in UTF-8 encoding
+    print(f"Validating kickstart files...")
     for root, dirs, files in os.walk(kickstart_path):
         for file in files:
             file_path = os.path.join(root, file)
-            print(f"Validating and converting Kickstart file {file_path} to UTF-8 encoding...")
             with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
                 content = f.read()
 
@@ -78,7 +78,7 @@ def validate_kickstart(kickstart_path):
             # Validate each kickstart file using ksvalidator
             try:
                 run_command(f"ksvalidator {file_path}")
-                print(f"Kickstart file {file_path} is valid.")
+                #print(f"Kickstart file {file_path} is valid.")
             except subprocess.CalledProcessError as e:
                 print(f"Kickstart validation failed for {file_path}: {e.output}")
                 sys.exit(1)
