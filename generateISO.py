@@ -11,7 +11,7 @@ import argparse
 def run_command(command):
     result = subprocess.run(command, shell=True, capture_output=True, text=True)
     if result.returncode != 0:
-        print(f"Error running command: {command}\n{result.stderr}")
+        print(f"### Error running command: {command}\n{result.stderr}")
         sys.exit(1)
     return result.stdout
 
@@ -26,22 +26,22 @@ def run_command_real_time(command):
             sys.stdout.flush()
     rc = process.poll()
     if rc != 0:
-        print(f"Error running command: {command}")
+        print(f"### Error running command: {command}")
         sys.exit(1)
 
 def download_iso(url, output):
     if os.path.isfile(output):
-        print(f"ISO {output} already exists in original_iso. Skipping download.")
+        print(f"--- ISO {output} already exists in original_iso. Skipping download.")
     else:
-        print(f"Downloading ISO from {url}...")
+        print(f"--- Downloading ISO from {url}...")
         run_command_real_time(f"wget --progress=bar:force {url} -O {output}")
 
 def extract_iso(iso_path, extract_to):
     if os.path.exists(extract_to):
-        print(f"Directory {extract_to} already exists. Skipping extraction.")
+        print(f"--- Directory {extract_to} already exists. Skipping extraction.")
         os.chmod(extract_to, 0o777)  # Ensure the directory is writable
     else:
-        print(f"Extracting ISO {iso_path} to {extract_to}...")
+        print(f"--- Extracting ISO {iso_path} to {extract_to}...")
         os.makedirs(extract_to, exist_ok=True)
         os.chmod(extract_to, 0o777)  # Ensure the directory is writable
         mount_point = os.path.join(os.getcwd(), "mnt/fuse_iso_mount")
@@ -66,7 +66,7 @@ def extract_iso(iso_path, extract_to):
 
 def validate_kickstart(kickstart_path):
     # Ensure the kickstart files are in UTF-8 encoding
-    print(f"Validating kickstart files...")
+    print(f"--- Validating kickstart files...")
     for root, dirs, files in os.walk(kickstart_path):
         for file in files:
             file_path = os.path.join(root, file)
@@ -81,14 +81,14 @@ def validate_kickstart(kickstart_path):
                 run_command(f"ksvalidator {file_path}")
                 #print(f"Kickstart file {file_path} is valid.")
             except subprocess.CalledProcessError as e:
-                print(f"Kickstart validation failed for {file_path}: {e.output}")
+                print(f"### Kickstart validation failed for {file_path}: {e.output}")
                 sys.exit(1)
 
 def add_kickstart_folder(extract_to, kickstart_folder):
     # Validate the kickstart files before adding them
     validate_kickstart(kickstart_folder)
 
-    print(f"Adding Kickstart folder {kickstart_folder} to {extract_to}...")
+    print(f"--- Adding Kickstart folder {kickstart_folder} to {extract_to}...")
     dest_path = os.path.join(extract_to, "kickstarts")
     if os.path.exists(dest_path):
         shutil.rmtree(dest_path)  # Remove any existing kickstarts folder
@@ -96,7 +96,7 @@ def add_kickstart_folder(extract_to, kickstart_folder):
     shutil.copytree(kickstart_folder, dest_path)
 
 def modify_boot_config(extract_to, volume_label, os_name, os_version):
-    print(f"Modifying boot configuration in {extract_to}...")
+    print(f"--- Modifying boot configuration in {extract_to}...")
     
     # Define paths for the original and copy of isolinux.cfg
     config_path = os.path.join(extract_to, "isolinux", "isolinux.cfg")
@@ -117,11 +117,11 @@ def modify_boot_config(extract_to, volume_label, os_name, os_version):
         file.write(f"    APPEND initrd=initrd.img rd.live.check=0 inst.stage2=hd:LABEL={volume_label} inst.ks=cdrom:/kickstarts/main.ks\n")
 
 def create_iso(extract_to, output_iso, volume_label):
-    print(f"Creating new ISO {output_iso} from {extract_to}...")
+    print(f"--- Creating new ISO {output_iso} from {extract_to}...")
     run_command(f"cd {extract_to} && genisoimage -joliet-long -o {output_iso} -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -J -R -V '{volume_label}' .")
 
 def implantmd5(output_iso):
-    print(f"Implanting MD5 checksum...")
+    print(f"--- Implanting MD5 checksum...")
     run_command(f"implantisomd5 {output_iso}")
 
 def get_volume_label(iso_path):
@@ -158,12 +158,12 @@ def main():
             if args.version:
                 fedora_version = args.version
             else:
-                print("Please specify the Fedora version using the --version option")
+                print("### Please specify the Fedora version using the --version option")
                 return
 
             iso_url = fedora_versions.get(fedora_version)
             if not iso_url:
-                print("Invalid Fedora version")
+                print("### Invalid Fedora version")
                 return
 
             kickstart_folder = "kickstarts"
@@ -180,17 +180,17 @@ def main():
             create_iso(extract_to, output_iso, volume_label)
             implantmd5(output_iso)
 
-            print(f"Custom ISO created successfully: {output_iso}")
+            print(f"--- Custom ISO created successfully: {output_iso}")
 
         elif args.distribution == "rhel":
             if args.iso:
                 iso_path = args.iso
             else:
-                print("Please specify the path to the RHEL ISO file using the --iso option")
+                print("### Please specify the path to the RHEL ISO file using the --iso option")
                 return
 
             if not os.path.isfile(iso_path):
-                print("RHEL ISO file not found")
+                print("## #RHEL ISO file not found")
                 return
 
             kickstart_folder = "kickstarts"
@@ -208,10 +208,10 @@ def main():
             create_iso(extract_to, output_iso, volume_label)
             implantmd5(output_iso)
 
-            print(f"Custom ISO created successfully: {output_iso}")
+            print(f"--- Custom ISO created successfully: {output_iso}")
 
         else:
-            print("Invalid choice")
+            print("### Invalid choice")
             return
 
     if __name__ == "__main__":
