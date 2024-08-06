@@ -9,7 +9,8 @@
     fuse
     fuseiso
     pykickstart
-
+    python3-tkinter
+    
 3. Run the application:
     3a. Generate image:
         ./FedoraGuard generate

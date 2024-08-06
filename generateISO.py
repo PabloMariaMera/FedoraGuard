@@ -6,6 +6,7 @@ import shutil
 import sys
 import time
 import re
+import argparse
 
 def run_command(command):
     result = subprocess.run(command, shell=True, capture_output=True, text=True)
@@ -143,73 +144,78 @@ def main():
         "34": "https://archives.fedoraproject.org/pub/archive/fedora/linux/releases/34/Server/x86_64/iso/Fedora-Server-dvd-x86_64-34-1.2.iso"
     }
 
-    print("Select distribution:")
-    print("1. Fedora")
-    print("2. Red Hat Enterprise Linux (RHEL)")
-    choice = input("Enter your choice (1 or 2): ").strip()
-    
-    kickstart_folder = "kickstarts"
-    # kickstart_path = input("Enter the path to your Kickstart file: ").strip()
-    # if not os.path.isfile(kickstart_path):
-    #     print("Kickstart file not found")
-    #     return
+    def parse_arguments():
+        parser = argparse.ArgumentParser(description="Generate custom ISO")
+        parser.add_argument("distribution", choices=["fedora", "rhel"], help="Select distribution: fedora or rhel")
+        parser.add_argument("--version", choices=["28", "34"], help="Specify Fedora version: 28 or 34")
+        parser.add_argument("--iso", help="Specify the path to the RHEL ISO file")
+        return parser.parse_args()
 
-    if choice == "1":
-        print("Select Fedora version:")
-        print("1. Fedora 28")
-        print("2. Fedora 34")
-        version_choice = input("Enter your choice (1 or 2): ").strip()
-        
-        if version_choice == "1":
-            iso_url = fedora_versions["28"]
-            fedora_version = "28"
-        elif version_choice == "2":
-            iso_url = fedora_versions["34"]
-            fedora_version = "34"
+    def main():
+        args = parse_arguments()
+
+        if args.distribution == "fedora":
+            if args.version:
+                fedora_version = args.version
+            else:
+                print("Please specify the Fedora version using the --version option")
+                return
+
+            iso_url = fedora_versions.get(fedora_version)
+            if not iso_url:
+                print("Invalid Fedora version")
+                return
+
+            kickstart_folder = "kickstarts"
+            downloaded_iso = os.path.join(original_iso_dir, f"Fedora-Server-dvd-x86_64-{fedora_version}.iso")
+            timestamp = time.strftime("%Y%m%d-%H%M%S")
+            output_iso = os.path.join(custom_iso_dir, f"Fedora-Server-dvd-x86_64-{fedora_version}-FedoraGuard-{timestamp}.iso")
+            extract_to = os.path.join(custom_iso_dir, f"extracted_iso_{os.path.basename(downloaded_iso).split('.')[0]}")
+            volume_label = "FedoraGuard"
+
+            download_iso(iso_url, downloaded_iso)
+            extract_iso(downloaded_iso, extract_to)
+            add_kickstart_folder(extract_to, kickstart_folder)
+            modify_boot_config(extract_to, volume_label, "Fedora", fedora_version)
+            create_iso(extract_to, output_iso, volume_label)
+            implantmd5(output_iso)
+
+            print(f"Custom ISO created successfully: {output_iso}")
+
+        elif args.distribution == "rhel":
+            if args.iso:
+                iso_path = args.iso
+            else:
+                print("Please specify the path to the RHEL ISO file using the --iso option")
+                return
+
+            if not os.path.isfile(iso_path):
+                print("RHEL ISO file not found")
+                return
+
+            kickstart_folder = "kickstarts"
+            downloaded_iso = iso_path
+            rhel_version_match = re.search(r"rhel-(\d+\.\d+)-x86_64-dvd\.iso", os.path.basename(downloaded_iso))
+            rhel_version = rhel_version_match.group(1) if rhel_version_match else "unknown"
+            timestamp = time.strftime("%Y%m%d-%H%M%S")
+            output_iso = os.path.join(custom_iso_dir, f"RHEL-{rhel_version}-FedoraGuard-{timestamp}.iso")
+            extract_to = os.path.join(custom_iso_dir, f"extracted_iso_{os.path.basename(downloaded_iso).split('.')[0]}")
+            volume_label = "FedoraGuard"
+
+            extract_iso(downloaded_iso, extract_to)
+            add_kickstart_folder(extract_to, kickstart_folder)
+            modify_boot_config(extract_to, volume_label, "Red Hat", rhel_version)
+            create_iso(extract_to, output_iso, volume_label)
+            implantmd5(output_iso)
+
+            print(f"Custom ISO created successfully: {output_iso}")
+
         else:
             print("Invalid choice")
             return
 
-        downloaded_iso = os.path.join(original_iso_dir, f"Fedora-Server-dvd-x86_64-{fedora_version}.iso")
-        timestamp = time.strftime("%Y%m%d-%H%M%S")
-        output_iso = os.path.join(custom_iso_dir, f"Fedora-Server-dvd-x86_64-{fedora_version}-FedoraGuard-{timestamp}.iso")
-        extract_to = os.path.join(custom_iso_dir, f"extracted_iso_{os.path.basename(downloaded_iso).split('.')[0]}")
-        volume_label = "FedoraGuard"
-
-        download_iso(iso_url, downloaded_iso)
-        extract_iso(downloaded_iso, extract_to)
-        add_kickstart_folder(extract_to, kickstart_folder)
-        modify_boot_config(extract_to, volume_label, "Fedora", fedora_version)
-        create_iso(extract_to, output_iso, volume_label)
-        implantmd5(output_iso)
-
-        print(f"Custom ISO created successfully: {output_iso}")
-
-    elif choice == "2":
-        iso_path = input("Enter the path to your RHEL ISO: ").strip()
-        if not os.path.isfile(iso_path):
-            print("RHEL ISO file not found")
-            return
-        
-        downloaded_iso = iso_path
-        rhel_version_match = re.search(r"rhel-(\d+\.\d+)-x86_64-dvd\.iso", os.path.basename(downloaded_iso))
-        rhel_version = rhel_version_match.group(1) if rhel_version_match else "unknown"
-        timestamp = time.strftime("%Y%m%d-%H%M%S")
-        output_iso = os.path.join(custom_iso_dir, f"RHEL-{rhel_version}-FedoraGuard-{timestamp}.iso")
-        extract_to = os.path.join(custom_iso_dir, f"extracted_iso_{os.path.basename(downloaded_iso).split('.')[0]}")
-        volume_label = "FedoraGuard"
-
-        extract_iso(downloaded_iso, extract_to)
-        add_kickstart_folder(extract_to, kickstart_folder)
-        modify_boot_config(extract_to, volume_label, "Red Hat", rhel_version)
-        create_iso(extract_to, output_iso, volume_label)
-        implantmd5(output_iso)
-
-        print(f"Custom ISO created successfully: {output_iso}")
-
-    else:
-        print("Invalid choice")
-        return
+    if __name__ == "__main__":
+        main()
 
 if __name__ == "__main__":
     main()
