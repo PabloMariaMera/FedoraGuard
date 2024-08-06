@@ -1,16 +1,22 @@
 1. Download the project
 
+> git clone https://github.com/PabloMariaMera/TFM.git
+
 2. Install dependencies:
     python3
     wget
     genisoimage
+    ksvalidator
     syslinux
     isomd5sum
     fuse
-    fuseiso
+    fuseiso (https://pkgs.org/download/fuseiso)
     pykickstart
     python3-tkinter
-    
+    python3-pillow-tk
+
+> sudo dnf install -y python3 wget genisoimage syslinux isomd5sum fuse pykickstart python3-tkinter python3-pillow-tk
+
 3. Run the application:
     3a. Generate image:
         ./FedoraGuard generate
