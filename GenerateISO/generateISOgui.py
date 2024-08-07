@@ -6,7 +6,7 @@ from tkinter import ttk, filedialog
 from PIL import Image, ImageTk
 import subprocess
 import threading
-
+import configparser
 
 class App:
     def __init__(self, root):
@@ -33,6 +33,9 @@ class App:
 
         # Set padding for all sides
         self.root.configure(padx=50, pady=40)
+
+        self.config = configparser.ConfigParser()
+        self.config.read("config.ini")
 
         # Create main menu buttons
         self.main_menu()
@@ -65,7 +68,10 @@ class App:
         self.options_frame.pack(pady=10, fill=tk.X)  # Fill the width of the window
 
         # Dropdown for OS selection
-        self.os_selector = ttk.Combobox(self.options_frame, values=["Fedora 28", "Fedora 34"])
+        operating_systems = self.config["OperatingSystem"]
+        os_list = list(operating_systems.keys())
+        formatted_os_list = [f"Fedora {os.split('fedora')[1]}" for os in os_list]
+        self.os_selector = ttk.Combobox(self.options_frame, values=formatted_os_list)
         self.os_selector.set("Selecciona Fedora")
         self.os_selector.pack(side=tk.LEFT, padx=(10, 5))  # Space between the dropdown and the separator
         

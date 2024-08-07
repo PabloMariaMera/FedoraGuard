@@ -12,10 +12,10 @@ fi
 # Execute the corresponding script based on the parameter
 case "$1" in
     generate)
-        if [ -f "generateISO.py" ]; then
-            python3 generateISO.py
+        if [ -f "GenerateISO/generateISOgui.py" ]; then
+            cd GenerateISO; python3 generateISOgui.py
         else
-            echo "Error: generateISO.py not found."
+            echo "Error: generateISOgui.py not found."
             exit 1
         fi
         ;;

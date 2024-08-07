@@ -22,17 +22,17 @@ keyboard --vckeymap=es --xlayouts='es'
 #
 # Language
 #
-lang en_US.UTF-8
+lang es_ES
 
 #
 # Root password
 #
-rootpw --plaintext root
+rootpw --iscrypted $6$/kBC6WN2b.IQgafH$Tk7adUkMepsO2egmvlQ9H0At7gQYsJVw1WaagdKCAr0PgBaqaUtEqI9xNe.R1U2lRS8osuAUo8uX0t1CTw2Jc0
 
 #
 # Users
 #
-user --name=user --password=user --gecos="user"
+user --name=test --password=$6$WRDZBl7rxgq5NlQY$oO89ZlXcTukcR05TW7zHNIzK4afn4zWY47deX5iDAVMSBe.A3ETz2cgfAMGAylqXRzfyNmHL/yr19I5QXe2Gg. --iscrypted 
 
 #
 # Timezone
@@ -49,7 +49,7 @@ timezone UTC
 #
 # Network
 #
-network --bootproto=dhcp
+network --bootproto=dhcp --hostname=FedoraGuard
 
 %include /run/install/repo/kickstarts/installation/graphical-progress.ks
 
@@ -75,3 +75,11 @@ network --bootproto=dhcp
 %include /run/install/repo/kickstarts/ccn-stic/11-Orphan_packages.ks
 %include /run/install/repo/kickstarts/ccn-stic/12-USB_limitation.ks
 %include /run/install/repo/kickstarts/ccn-stic/13-Antivirus_install.ks
+
+#
+# Copy files
+#
+
+#
+# Custom scripts
+#

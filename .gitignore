@@ -162,9 +162,9 @@ cython_debug/
 #.idea/
 
 # Ignorar todo el contenido de original_iso
-original_iso/*
-!original_iso/.gitkeep
+GenerateISO/original_iso/*
+!GenerateISO/original_iso/.gitkeep
 
 # Ignorar todo el contenido de custom_iso
-custom_iso/*
-!custom_iso/.gitkeep
+GenerateISO/custom_iso/*
+!GenerateISO/custom_iso/.gitkeep

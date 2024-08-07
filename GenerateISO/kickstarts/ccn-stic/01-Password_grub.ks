@@ -4,7 +4,7 @@
 echo "--------------------------------"
 echo "--APLICANDO CONTRASEÑA DE GRUB--"
 echo "--------------------------------"
-var=$(echo -e 'micontrasenagrub\nmicontrasenagrub' | grub2-mkpasswd-pbkdf2 | awk '/grub.pbkdf/{print$NF}' | cut -d' ' -f7)
+var=$(echo -e 'test\ntest' | grub2-mkpasswd-pbkdf2 | awk '/grub.pbkdf/{print$NF}' | cut -d' ' -f7)
 echo $var
 echo set superusers="root">>/etc/grub.d/40_custom
 echo password_pbkdf2 root $var >>/etc/grub.d/40_custom
