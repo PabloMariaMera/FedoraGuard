@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 
 import configparser
-#import crypt
-import shacrypt512
 import os
 import subprocess
 import shutil
@@ -10,6 +9,7 @@ import sys
 import time
 import re
 import argparse
+from modifyKickstarts import *
 
 def run_command(command):
     result = subprocess.run(command, shell=True, capture_output=True, text=True)
@@ -140,124 +140,6 @@ def parse_arguments():
     parser.add_argument("--iso", help="Specify the path to the RHEL ISO file")
     return parser.parse_args()
 
-def modifyHostname(mainks_path, hostname):
-    with open(mainks_path, 'r') as file:
-        content = file.read()
-
-    if not hostname:
-        hostname = "FedoraGuard"
-
-    content = re.sub(r"network --bootproto=dhcp --hostname=\S+", f"network --bootproto=dhcp --hostname={hostname}", content)
-    
-    with open(mainks_path, 'w') as file:
-        file.write(content)
-
-def modifyRootpassword(mainks_path, ccnguides_path, root_password):
-    with open(mainks_path, 'r') as file:
-        content = file.read()
-    
-    if not root_password:
-        root_password = "FedoraGuard"
-
-    #crypt_password = crypt.crypt(root_password)
-    crypt_password = shacrypt512.shacrypt(root_password.encode('utf-8'))
-    content = re.sub(r"rootpw --iscrypted \S+", f"rootpw --iscrypted {crypt_password}", content)
-    
-    with open(mainks_path, 'w') as file:
-        file.write(content)
-    
-    with open(ccnguides_path+"/01-Password_grub.ks", 'r') as file:
-        content = file.readlines()
-
-    line = "var=$(echo -e '"+root_password+"\\n"+root_password+"' | grub2-mkpasswd-pbkdf2 | awk '/grub.pbkdf/{print$NF}' | cut -d' ' -f7)\n"
-    content[6]  = line
-    
-    with open(ccnguides_path+"/01-Password_grub.ks", 'w') as file:
-        file.writelines(content)
-    
-def modifyPackages(mainks_path, packages):
-    with open(mainks_path, 'r') as file:
-        content = file.read()
-
-    if packages:
-        packages = packages.split(",")
-        aditional_packages = ""
-        for i in packages:
-            aditional_packages = aditional_packages+f"{i}\n"
-        content = re.sub(r"%packages\s+.*?%end", f"%packages\n@standard\n{aditional_packages}%end", content, flags=re.DOTALL)
-
-    else:
-        content = re.sub(r"%packages\s+.*?%end", f"%packages\n@standard\n%end", content, flags=re.DOTALL)
-
-    with open(mainks_path, 'w') as file:
-        file.write(content)
-
-def modifyLanguage(mainks_path, os_language):
-    if os_language:
-        with open(mainks_path, 'r') as file:
-            content = file.read()
-        
-        content = re.sub(r"lang \S+", f"lang {os_language}", content)
-        
-        with open(mainks_path, 'w') as file:
-            file.write(content)
-
-def modifyKeyboard(mainks_path, keyboard):
-    if keyboard:
-        with open(mainks_path, 'r') as file:
-            content = file.read()
-
-        content = re.sub(r"keyboard --vckeymap=\S+ --xlayouts='\S+'", f"keyboard --vckeymap={keyboard} --xlayouts='{keyboard}'", content)
-
-        with open(mainks_path, 'w') as file:
-            file.write(content)
-
-def modifyUsers(mainks_path, users):
-
-        with open(mainks_path, 'r') as file:
-            content = file.readlines()
-        
-        content = [line for line in content if not line.strip().startswith("user --name")]
-
-        if users:
-            newlines = []
-            for user in users:
-                userksline = "user "
-                userksline = userksline + "--name=" + user[0] + " "
-                options = user[1].split(",")
-                if options[0] != "":
-                    userksline = userksline + "--password=" + shacrypt512.shacrypt(options[0].encode('utf-8')) + " --iscrypted "
-                if options[1] != "":
-                    userksline = userksline + "--uid=" + options[1] + " "
-                if options[2] != "":
-                    userksline = userksline + "--gid=" + options[2] + " "
-                if options[3] != "":
-                    userksline = userksline + "--gecos=" + options[3] + " "
-                if options[4] != "":
-                    userksline = userksline + "--homedir=" + options[4] + " "
-
-                newlines.append(userksline)
-            
-            for i in newlines:
-                userksline = i + "\n"
-
-            # Buscar la posición de "# Users\n" en el contenido
-            posicion_users = None
-            for i, linea in enumerate(content):
-                if linea.strip() == '# Users':
-                    posicion_users = i + 2  # Insertar después de esta línea
-                    break
-            
-            if posicion_users is not None:
-                # Insertar la cadena en la posición encontrada
-                for i in newlines:
-                    content.insert(posicion_users, i + '\n')
-                
-        with open(mainks_path, 'w') as file:
-            file.writelines(content)
-
-def modifyCCNguides(ccnguides_path, ccnguides):
-    print("TODO: Modify CCNguides")
 
 def modify_kickstarts(kickstart_folder, config):
     mainks_path = os.path.join(kickstart_folder, "main.ks")
@@ -269,7 +151,7 @@ def modify_kickstarts(kickstart_folder, config):
     modifyLanguage(mainks_path,config["Language"]["os_language"])
     modifyKeyboard(mainks_path,config["Language"]["keyboard"])
     modifyUsers(mainks_path,config.items("Users"))
-    modifyCCNguides(ccnguides_path, config["CCNguides"])
+    modifyCCNguides(mainks_path, ccnguides_path, config["CCNguides"])
 
 def main():
 
@@ -341,7 +223,6 @@ def main():
     implantmd5(output_iso)
     
     print(f"--- Custom ISO created successfully: {output_iso}")
-
 
 if __name__ == "__main__":
     main()

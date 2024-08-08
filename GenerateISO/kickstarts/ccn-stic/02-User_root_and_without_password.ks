@@ -9,8 +9,8 @@ echo
 /usr/bin/chage -m 2 -M 45 -W 10 root
 
 sleep 2
-
-echo "micontrasenaroot" | passwd --stdin root;
+#La siguiente línea debe estar en la línea 13
+echo "test" | passwd --stdin root;
 
 echo
 

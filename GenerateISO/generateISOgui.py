@@ -3,7 +3,6 @@
 
 import tkinter as tk
 from tkinter import ttk, filedialog
-from PIL import Image, ImageTk
 import subprocess
 import threading
 import configparser

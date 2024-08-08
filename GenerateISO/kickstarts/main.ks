@@ -27,12 +27,12 @@ lang es_ES
 #
 # Root password
 #
-rootpw --iscrypted $6$/kBC6WN2b.IQgafH$Tk7adUkMepsO2egmvlQ9H0At7gQYsJVw1WaagdKCAr0PgBaqaUtEqI9xNe.R1U2lRS8osuAUo8uX0t1CTw2Jc0
+rootpw --iscrypted $6$TGrxykOWC/Dhg9v3$s.wvT5CE555mHn8zmTJgkWO4HxFWzY59HQzR8Hz6mnPlXMboQgZd1mJ6fZOrEoHqq8wzGVBMOeMLHXnO63KEr0
 
 #
 # Users
 #
-user --name=test --password=$6$WRDZBl7rxgq5NlQY$oO89ZlXcTukcR05TW7zHNIzK4afn4zWY47deX5iDAVMSBe.A3ETz2cgfAMGAylqXRzfyNmHL/yr19I5QXe2Gg. --iscrypted 
+user --name=test --password=$6$bxol6mKXHJpijIGl$/FpHWHH2ionS1yca8PsQSYxQtJ2FHcGdUzTgfeFabf9bluSw.Ijhaa1MVW2YZGXBiIVLlkvuDvMZCTJMSuNGc/ --iscrypted 
 
 #
 # Timezone
@@ -75,6 +75,7 @@ network --bootproto=dhcp --hostname=FedoraGuard
 %include /run/install/repo/kickstarts/ccn-stic/11-Orphan_packages.ks
 %include /run/install/repo/kickstarts/ccn-stic/12-USB_limitation.ks
 %include /run/install/repo/kickstarts/ccn-stic/13-Antivirus_install.ks
+%include /run/install/repo/kickstarts/ccn-stic/14-Configure_cockpit.ks
 
 #
 # Copy files
