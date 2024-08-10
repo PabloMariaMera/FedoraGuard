@@ -6,6 +6,7 @@ from tkinter import ttk, filedialog
 import subprocess
 import threading
 import configparser
+from tkinter import simpledialog
 
 class App:
     def __init__(self, root):
@@ -170,6 +171,7 @@ class App:
         ttk.Button(self.root, text="Usuarios", command=self.show_users_submenu).pack(pady=5)
         ttk.Button(self.root, text="Paquetes", command=self.show_packages_submenu).pack(pady=5)
         ttk.Button(self.root, text="Scripts", command=self.show_scripts_submenu).pack(pady=5)
+        ttk.Button(self.root, text="Ficheros", command=self.show_files_submenu).pack(pady=5)
         ttk.Button(self.root, text="Idioma", command=self.show_language_submenu).pack(pady=5)
 
         # Button to apply the configuration
@@ -192,16 +194,44 @@ class App:
         # Label to show the submenu name
         ttk.Label(self.root, text="Configuración de Bastionado", font=("Arial", 14)).pack(pady=10)
 
-        # Placeholder content for the submenu
-        ttk.Label(self.root, text="Aquí va la configuración de Bastionado.").pack(pady=10)
+        # Entry field for grub password
+        ttk.Label(self.root, text="Contraseña de grub", font=("Arial", 11)).pack()
+        self.grub_password_entry = ttk.Entry(self.root)
+        self.grub_password_entry.pack(pady=5)
+        self.grub_password_entry.insert(0, "test")
+
+        # Entry field for banner
+        ttk.Label(self.root, text="Banner", font=("Arial", 11)).pack()
+        self.banner_entry = tk.Text(self.root, height=5, width=30)
+        self.banner_entry.pack(pady=5)
+        self.banner_entry.insert(tk.END, "ES UN DELITO CONTINUAR SIN LA DEBIDA AUTORIZACIÓN")
+
+        # Checkbutton for install_clamav
+        self.install_clamav_var = tk.BooleanVar()
+        self.install_clamav_checkbutton = ttk.Checkbutton(self.root, text="Instalar ClamAV", variable=self.install_clamav_var)
+        self.install_clamav_checkbutton.pack(pady=5)
+        self.install_clamav_var.set(True)
+
+        # Checkbutton for install_cockpit
+        self.install_cockpit_var = tk.BooleanVar()
+        self.install_cockpit_checkbutton = ttk.Checkbutton(self.root, text="Instalar Cockpit", variable=self.install_cockpit_var)
+        self.install_cockpit_checkbutton.pack(pady=5)
+        self.install_cockpit_var.set(True)
+
+        # Checkbutton for allow_usb
+        self.allow_usb_var = tk.BooleanVar()
+        self.allow_usb_checkbutton = ttk.Checkbutton(self.root, text="Permitir USB", variable=self.allow_usb_var)
+        self.allow_usb_checkbutton.pack(pady=5)
+        self.allow_usb_var.set(False)
+
+        # Checkbutton for allow_root
+        self.allow_root_var = tk.BooleanVar()
+        self.allow_root_checkbutton = ttk.Checkbutton(self.root, text="Permitir Root", variable=self.allow_root_var)
+        self.allow_root_checkbutton.pack(pady=5)
+        self.allow_root_var.set(True)
 
         # Button to return to the configuration menu
         ttk.Button(self.root, text="Volver", command=self.configuration_menu).pack(pady=5)
-
-        # Update window size to fit content
-        self.root.update_idletasks()
-        self.root.geometry("")
-
     def show_root_password_submenu(self):
         # Clear any existing widgets, except the logo
         self.clear_frame()
@@ -212,9 +242,11 @@ class App:
         # Label to show the submenu name
         ttk.Label(self.root, text="Configuración de Contraseña root", font=("Arial", 14)).pack(pady=10)
 
-        # Placeholder content for the submenu
-        ttk.Label(self.root, text="Aquí va la configuración de Contraseña root.").pack(pady=10)
-
+        # Entry field for root password
+        self.root_password_entry = ttk.Entry(self.root)
+        self.root_password_entry.pack(pady=10)
+        # Set the initial value of the root password entry field to asterisks
+        self.root_password_entry.insert(0, "TODO: VALOR ACTUAL")
         # Button to return to the configuration menu
         ttk.Button(self.root, text="Volver", command=self.configuration_menu).pack(pady=5)
 
@@ -222,6 +254,49 @@ class App:
         self.root.update_idletasks()
         self.root.geometry("")
 
+    def open_new_tab(self, event):
+        # Get the selected element from the listbox
+        selected_element = self.users_listbox.get(self.users_listbox.curselection())
+
+        # Open a new tab with the selected element
+        # TODO: Implement the logic to open a new tab
+
+    def add_newuser(self):
+        # Open a dialog to enter a new element
+        new_element = simpledialog.askstring("Añadir Elemento", "Introduce un nuevo elemento")
+
+        # Add the new element to the listbox
+        if new_element:
+            self.users_listbox.insert(tk.END, new_element)
+
+    def delete_user(self):
+        # Get the selected element from the listbox
+        try:
+            selected_element = self.users_listbox.get(self.users_listbox.curselection())
+        except tk.TclError:
+            selected_element = None
+
+        # Delete the selected element from the listbox
+        if selected_element:
+            self.users_listbox.delete(self.users_listbox.curselection())
+
+    def modify_user(self):
+        # Get the selected element from the listbox
+        try:
+            selected_element = self.users_listbox.get(self.users_listbox.curselection())
+        except tk.TclError:
+            selected_element = None
+
+        if selected_element:
+            # Open a dialog to modify the selected element
+            modified_element = simpledialog.askstring("Modificar Elemento", "Introduce los nuevos valores separados por comas (password,uid,gid,description,home)", initialvalue=",,,,")
+
+            # Update the selected element with the modified values
+            if modified_element:
+                # Save the modified values in a separate variable
+                password, gid, uid, description, home = modified_element.split(",")
+                # TODO: Do something with the modified values
+    
     def show_users_submenu(self):
         # Clear any existing widgets, except the logo
         self.clear_frame()
@@ -232,15 +307,46 @@ class App:
         # Label to show the submenu name
         ttk.Label(self.root, text="Configuración de Usuarios", font=("Arial", 14)).pack(pady=10)
 
-        # Placeholder content for the submenu
-        ttk.Label(self.root, text="Aquí va la configuración de Usuarios.").pack(pady=10)
+        # Listbox to display the elements
+        self.users_listbox = tk.Listbox(self.root)
+        self.users_listbox.pack(pady=10)
 
+        # Double click event handler for opening a new tab
+        self.users_listbox.bind("<Double-Button-1>", self.open_new_tab)
+
+        # Button to add a new element
+        ttk.Button(self.root, text="Añadir Elemento", command=self.add_newuser).pack(pady=5)
+
+        # Button to delete the selected element
+        ttk.Button(self.root, text="Borrar Elemento", command=self.delete_user).pack(pady=5)
+        # Button to modify the selected element
+        ttk.Button(self.root, text="Modificar Elemento", command=self.modify_user).pack(pady=5)
+        
         # Button to return to the configuration menu
         ttk.Button(self.root, text="Volver", command=self.configuration_menu).pack(pady=5)
 
         # Update window size to fit content
         self.root.update_idletasks()
         self.root.geometry("")
+
+    def add_package(self):
+        # Open a dialog to enter a new element
+        new_element = simpledialog.askstring("Añadir Elemento", "Introduce un nuevo elemento")
+
+        # Add the new element to the listbox
+        if new_element:
+            self.packages_listbox.insert(tk.END, new_element)
+
+    def delete_package(self):
+        # Get the selected element from the listbox
+        try:
+            selected_element = self.packages_listbox.get(self.packages_listbox.curselection())
+        except tk.TclError:
+            selected_element = None
+
+        # Delete the selected element from the listbox
+        if selected_element:
+            self.packages_listbox.delete(self.packages_listbox.curselection())
 
     def show_packages_submenu(self):
         # Clear any existing widgets, except the logo
@@ -252,8 +358,15 @@ class App:
         # Label to show the submenu name
         ttk.Label(self.root, text="Configuración de Paquetes", font=("Arial", 14)).pack(pady=10)
 
-        # Placeholder content for the submenu
-        ttk.Label(self.root, text="Aquí va la configuración de Paquetes.").pack(pady=10)
+        # Listbox to display the elements
+        self.packages_listbox = tk.Listbox(self.root)
+        self.packages_listbox.pack(pady=10)
+
+        # Button to add a new element
+        ttk.Button(self.root, text="Añadir Elemento", command=self.add_package).pack(pady=5)
+
+        # Button to delete the selected element
+        ttk.Button(self.root, text="Borrar Elemento", command=self.delete_package).pack(pady=5)
 
         # Button to return to the configuration menu
         ttk.Button(self.root, text="Volver", command=self.configuration_menu).pack(pady=5)
@@ -261,6 +374,25 @@ class App:
         # Update window size to fit content
         self.root.update_idletasks()
         self.root.geometry("")
+
+    def add_script(self):
+        # Open a dialog to enter a new element
+        new_element = simpledialog.askstring("Añadir Elemento", "Introduce un nuevo elemento")
+
+        # Add the new element to the listbox
+        if new_element:
+            self.scripts_listbox.insert(tk.END, new_element)
+
+    def delete_script(self):
+        # Get the selected element from the listbox
+        try:
+            selected_element = self.scripts_listbox.get(self.scripts_listbox.curselection())
+        except tk.TclError:
+            selected_element = None
+
+        # Delete the selected element from the listbox
+        if selected_element:
+            self.scripts_listbox.delete(self.scripts_listbox.curselection())
 
     def show_scripts_submenu(self):
         # Clear any existing widgets, except the logo
@@ -272,8 +404,61 @@ class App:
         # Label to show the submenu name
         ttk.Label(self.root, text="Configuración de Scripts", font=("Arial", 14)).pack(pady=10)
 
-        # Placeholder content for the submenu
-        ttk.Label(self.root, text="Aquí va la configuración de Scripts.").pack(pady=10)
+        # Listbox to display the elements
+        self.scripts_listbox = tk.Listbox(self.root)
+        self.scripts_listbox.pack(pady=10)
+
+        # Button to add a new element
+        ttk.Button(self.root, text="Añadir Elemento", command=self.add_script).pack(pady=5)
+
+        # Button to delete the selected element
+        ttk.Button(self.root, text="Borrar Elemento", command=self.delete_script).pack(pady=5)
+
+        # Button to return to the configuration menu
+        ttk.Button(self.root, text="Volver", command=self.configuration_menu).pack(pady=5)
+
+        # Update window size to fit content
+        self.root.update_idletasks()
+        self.root.geometry("")
+
+    def add_file(self):
+        # Open a dialog to enter a new element
+        new_element = simpledialog.askstring("Añadir Elemento", "Introduce un nuevo elemento")
+
+        # Add the new element to the listbox
+        if new_element:
+            self.files_listbox.insert(tk.END, new_element)
+
+    def delete_file(self):
+        # Get the selected element from the listbox
+        try:
+            selected_element = self.files_listbox.get(self.files_listbox.curselection())
+        except tk.TclError:
+            selected_element = None
+
+        # Delete the selected element from the listbox
+        if selected_element:
+            self.files_listbox.delete(self.files_listbox.curselection())
+
+    def show_files_submenu(self):
+        # Clear any existing widgets, except the logo
+        self.clear_frame()
+
+        # Display the logo
+        self.logo_label.pack(pady=10)
+
+        # Label to show the submenu name
+        ttk.Label(self.root, text="Configuración de ficheros", font=("Arial", 14)).pack(pady=10)
+
+        # Listbox to display the elements
+        self.files_listbox = tk.Listbox(self.root)
+        self.files_listbox.pack(pady=10)
+
+        # Button to add a new element
+        ttk.Button(self.root, text="Añadir Elemento", command=self.add_file).pack(pady=5)
+
+        # Button to delete the selected element
+        ttk.Button(self.root, text="Borrar Elemento", command=self.delete_file).pack(pady=5)
 
         # Button to return to the configuration menu
         ttk.Button(self.root, text="Volver", command=self.configuration_menu).pack(pady=5)
@@ -292,8 +477,23 @@ class App:
         # Label to show the submenu name
         ttk.Label(self.root, text="Configuración de Idioma", font=("Arial", 14)).pack(pady=10)
 
-        # Placeholder content for the submenu
-        ttk.Label(self.root, text="Aquí va la configuración de Idioma.").pack(pady=10)
+        # Entry field for keyboard password
+        ttk.Label(self.root, text="Teclado", font=("Arial", 11)).pack(pady=10)
+        keyboard_var = tk.StringVar()
+        keyboard_combobox = ttk.Combobox(self.root, textvariable=keyboard_var)
+        keyboard_combobox['values'] = ('Español', 'Inglés', 'Francés', 'Alemán')
+        keyboard_combobox.pack(pady=10)
+        # Set the initial value of the keyboard combobox
+        keyboard_combobox.current(0)
+
+        # Entry field for language
+        ttk.Label(self.root, text="Idioma del SO", font=("Arial", 11)).pack(pady=10)
+        language_var = tk.StringVar()
+        language_combobox = ttk.Combobox(self.root, textvariable=language_var)
+        language_combobox['values'] = ('Español', 'Inglés', 'Francés', 'Alemán')
+        language_combobox.pack(pady=10)
+        # Set the initial value of the language combobox
+        language_combobox.current(0)
 
         # Button to return to the configuration menu
         ttk.Button(self.root, text="Volver", command=self.configuration_menu).pack(pady=5)
