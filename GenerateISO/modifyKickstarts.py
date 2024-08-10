@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import os
 import re
 #import crypt
 import shacrypt512
@@ -220,3 +221,53 @@ def modifyCCNguides(mainks_path, ccnguides_path, ccnguides):
     modifyCockpit(mainks_path, ccnguides["install_cockpit"])
     modifyAllowUSB(mainks_path, ccnguides["allow_usb"])
     modifyAllowRoot(ccnguides_path, ccnguides["allow_root"])
+
+def modifyScripts(scripts_folder, dest_scripts_path, config):
+    if config["Scripts"]:
+        path_list = []
+        for name, path in config["Scripts"].items():
+            if path in os.listdir(scripts_folder):
+                createScriptsKickstart(name, path, scripts_folder, dest_scripts_path)
+                path_list.append(name+".ks")
+            else:
+                print(f"Script {path} not found in {scripts_folder}")
+                exit(1)
+        addToCustomScriptsKs(path_list, dest_scripts_path)
+    else:
+        with open(os.path.join(dest_scripts_path, "custom_scripts.ks"), 'w') as file:
+            file.write("%post\necho 'No custom scripts added.'\n%end\n")
+
+def modifyFiles(files_folder, dest_files_path, config):
+    if config["Files"]:
+        path_list = []
+        for name, path in config["Files"].items():
+            if path in os.listdir(files_folder):
+                createFilesKickstart(name, path, dest_files_path)
+                path_list.append(name+".ks")
+            else:
+                print(f"File {path} not found in {files_folder}")
+                exit(1)
+        addToCustomFilesKs(path_list, dest_files_path)
+    else:
+        with open(os.path.join(dest_files_path, "custom_files.ks"), 'w') as file:
+            file.write("%post\necho 'No custom files added.'\n%end\n")
+    exit()
+def createScriptsKickstart(name, path, scripts_folder, dest_scripts_path):
+    with open(os.path.join(scripts_folder, path), 'r') as file:
+        script_content = file.read()
+    with open(os.path.join(dest_scripts_path, name+".ks"), 'w') as file:
+        file.write('%post\n'+script_content+'\n%end\n')
+    
+def createFilesKickstart(name, path, dest_files_path):
+    with open(os.path.join(dest_files_path, name+".ks"), 'w') as file:
+        file.write('%post --nochroot\ncp /run/install/repo/files/'+path+' /mnt/sysimage/files/\n%end\n')
+
+def addToCustomScriptsKs(path_list, dest_scripts_path):
+    with open(os.path.join(dest_scripts_path, "custom_scripts.ks"), 'w') as file:
+        for path in path_list:
+            file.write("%include /run/install/repo/kickstarts/custom_scripts/"+path+"\n")
+
+def addToCustomFilesKs(path_list, dest_files_path):
+    with open(os.path.join(dest_files_path, "custom_files.ks"), 'w') as file:
+        for path in path_list:
+            file.write("%include /run/install/repo/kickstarts/custom_files/"+path+"\n")

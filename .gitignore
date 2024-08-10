@@ -168,3 +168,18 @@ GenerateISO/original_iso/*
 # Ignorar todo el contenido de custom_iso
 GenerateISO/custom_iso/*
 !GenerateISO/custom_iso/.gitkeep
+
+# Ignorar todo el contenido de custom_files
+GenerateISO/add_files/*
+!GenerateISO/add_files/.gitkeep
+GenerateISO/kickstarts/custom_files/*
+!GenerateISO/kickstarts/custom_files/.gitkeep
+
+# Ignorar todo el contenido de custom_scripts
+GenerateISO/add_scripts/*
+!GenerateISO/add_scripts/.gitkeep
+GenerateISO/kickstarts/custom_scripts/*
+!GenerateISO/kickstarts/custom_scripts/.gitkeep
+
+# Ignorar config.ini
+GenerateISO/config.ini

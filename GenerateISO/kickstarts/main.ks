@@ -27,12 +27,12 @@ lang es_ES
 #
 # Root password
 #
-rootpw --iscrypted $6$TGrxykOWC/Dhg9v3$s.wvT5CE555mHn8zmTJgkWO4HxFWzY59HQzR8Hz6mnPlXMboQgZd1mJ6fZOrEoHqq8wzGVBMOeMLHXnO63KEr0
+rootpw --iscrypted $6$dX6PqY37kqc3A.Hn$AeFr5nt1JfwxRp/powYol1qbqush5ptnr.sPX4vsaxCaur.x6mv/uYNzXmIyPfaJ/2guAtLmIYn7HcmDVsa5E.
 
 #
 # Users
 #
-user --name=test --password=$6$bxol6mKXHJpijIGl$/FpHWHH2ionS1yca8PsQSYxQtJ2FHcGdUzTgfeFabf9bluSw.Ijhaa1MVW2YZGXBiIVLlkvuDvMZCTJMSuNGc/ --iscrypted 
+user --name=test --password=$6$FQHEMkaOWN0nA6i4$6XFRlXDe.GeMlHXlQ39QuR0IUeZ41OTDiU5kdDUwxJJGWpzzAHVhTpm54bbhB4fAM8k.0PSb9A6hp7CokW/ut0 --iscrypted 
 
 #
 # Timezone
@@ -80,7 +80,12 @@ network --bootproto=dhcp --hostname=FedoraGuard
 #
 # Copy files
 #
+%post
+mkdir /files/
+%end
+%include /run/install/repo/kickstarts/custom_files/custom_files.ks
 
 #
 # Custom scripts
 #
+%include /run/install/repo/kickstarts/custom_scripts/custom_scripts.ks

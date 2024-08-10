@@ -72,20 +72,21 @@ def validate_kickstart(kickstart_path):
     print(f"--- Validating kickstart files...")
     for root, dirs, files in os.walk(kickstart_path):
         for file in files:
-            file_path = os.path.join(root, file)
-            with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
-                content = f.read()
+            if file != ".gitkeep":  # Exclude .gitkeep file
+                file_path = os.path.join(root, file)
+                with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
+                    content = f.read()
 
-            with open(file_path, 'w', encoding='utf-8') as f:
-                f.write(content)
+                with open(file_path, 'w', encoding='utf-8') as f:
+                    f.write(content)
 
-            # Validate each kickstart file using ksvalidator
-            try:
-                run_command(f"ksvalidator {file_path}")
-                #print(f"Kickstart file {file_path} is valid.")
-            except subprocess.CalledProcessError as e:
-                print(f"### Kickstart validation failed for {file_path}: {e.output}")
-                sys.exit(1)
+                # Validate each kickstart file using ksvalidator
+                try:
+                    run_command(f"ksvalidator {file_path}")
+                    #print(f"Kickstart file {file_path} is valid.")
+                except subprocess.CalledProcessError as e:
+                    print(f"### Kickstart validation failed for {file_path}: {e.output}")
+                    sys.exit(1)
 
 def add_kickstart_folder(extract_to, kickstart_folder):
     # Validate the kickstart files before adding them
@@ -142,6 +143,7 @@ def parse_arguments():
 
 
 def modify_kickstarts(kickstart_folder, config):
+    print(f"--- Modifying kickstarts with config.ini configuration...")
     mainks_path = os.path.join(kickstart_folder, "main.ks")
     ccnguides_path = os.path.join(kickstart_folder, "ccn-stic")
 
@@ -152,6 +154,33 @@ def modify_kickstarts(kickstart_folder, config):
     modifyKeyboard(mainks_path,config["Language"]["keyboard"])
     modifyUsers(mainks_path,config.items("Users"))
     modifyCCNguides(mainks_path, ccnguides_path, config["CCNguides"])
+
+def script_and_files_to_kickstart(kickstart_folder, scripts_folder, files_folder, config):
+    print(f"--- Parsing scripts and files to kickstart syntax...")
+    dest_scripts_path = os.path.join(kickstart_folder, "custom_scripts")
+    dest_files_path = os.path.join(kickstart_folder, "custom_files")
+
+    if os.path.exists(dest_scripts_path):
+        for root, dirs, files in os.walk(dest_scripts_path):
+            for file in files:
+                if file != ".gitkeep":  # Exclude .gitkeep file
+                    os.remove(os.path.join(root, file))  # Remove files inside scripts folder
+    if os.path.exists(dest_files_path):
+        for root, dirs, files in os.walk(dest_files_path):
+            for file in files:
+                if file != ".gitkeep":  # Exclude .gitkeep file
+                    os.remove(os.path.join(root, file))  # Remove files inside files folder
+
+    modifyScripts(scripts_folder, dest_scripts_path, config)
+    modifyFiles(files_folder, dest_files_path, config)
+
+def add_files_folder(extract_to, files_folder):
+    print(f"--- Adding Files folder {files_folder} to {extract_to}...")
+    dest_path = os.path.join(extract_to, "files")
+    if os.path.exists(dest_path):
+        shutil.rmtree(dest_path)  # Remove any existing files folder
+
+    shutil.copytree(files_folder, dest_path)
 
 def main():
 
@@ -210,6 +239,8 @@ def main():
         return
 
     kickstart_folder = "kickstarts"
+    files_folder = "add_files"
+    scripts_folder = "add_scripts"
     timestamp = time.strftime("%Y%m%d-%H%M%S")
     output_iso = os.path.join(custom_iso_dir, f"{args.distribution}-{version}-FedoraGuard-{timestamp}.iso")
     extract_to = os.path.join(custom_iso_dir, f"extracted_iso_{os.path.basename(downloaded_iso).split('.')[0]}")
@@ -217,7 +248,9 @@ def main():
 
     extract_iso(downloaded_iso, extract_to)
     modify_kickstarts(kickstart_folder, config)
+    script_and_files_to_kickstart(kickstart_folder, scripts_folder, files_folder, config)
     add_kickstart_folder(extract_to, kickstart_folder)
+    add_files_folder(extract_to, files_folder)
     modify_boot_config(extract_to, volume_label, args.distribution, version)
     create_iso(extract_to, output_iso, volume_label)
     implantmd5(output_iso)
