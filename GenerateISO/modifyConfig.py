@@ -10,6 +10,10 @@ class ConfigManager:
         """Save the current configuration to the file."""
         with open(self.config_file, 'w') as configfile:
             self.config.write(configfile)
+    
+    def reload_config(self):
+        """Reload the configuration from the file."""
+        self.config.read(self.config_file)
 
     def modify_hostname(self, new_hostname):
         """Modify the hostname in the [General] section."""
@@ -72,3 +76,76 @@ class ConfigManager:
         """Modify the scripts in the [Scripts] section."""
         for key, value in new_scripts.items():
             self.config['Scripts'][key] = value
+    
+    def modify_user(self, new_user):
+        """Modify the user in the [User] section."""
+        for key, value in new_user.items():
+            self.config['User'][key] = value
+
+    def get_hostname(self):
+        """Get the hostname from the [General] section."""
+        return self.config['General']['hostname']
+
+    def get_root_password(self):
+        """Get the root password from the [General] section."""
+        return self.config['General']['root_password']
+
+    def get_keyboard(self):
+        """Get the keyboard setting from the [Language] section."""
+        return self.config['Language']['keyboard']
+
+    def get_os_language(self):
+        """Get the os_language setting from the [Language] section."""
+        return self.config['Language']['os_language']
+
+    def get_grub_password(self):
+        """Get the grub password from the [CCNguides] section."""
+        return self.config['CCNguides']['grub_password']
+
+    def get_banner(self):
+        """Get the banner from the [CCNguides] section."""
+        return self.config['CCNguides']['banner']
+
+    def get_install_clamav(self):
+        """Get the install_clamav setting from the [CCNguides] section."""
+        return self.config['CCNguides']['install_clamav']
+
+    def get_install_cockpit(self):
+        """Get the install_cockpit setting from the [CCNguides] section."""
+        return self.config['CCNguides']['install_cockpit']
+
+    def get_allow_usb(self):
+        """Get the allow_usb setting from the [CCNguides] section."""
+        return self.config['CCNguides']['allow_usb']
+
+    def get_allow_root(self):
+        """Get the allow_root setting from the [CCNguides] section."""
+        return self.config['CCNguides']['allow_root']
+
+    def get_fedora28(self):
+        """Get the fedora28 download link from the [OperatingSystem] section."""
+        return self.config['OperatingSystem']['fedora28']
+
+    def get_fedora34(self):
+        """Get the fedora34 download link from the [OperatingSystem] section."""
+        return self.config['OperatingSystem']['fedora34']
+
+    def get_packages(self):
+        """Get the packages from the [Packages] section."""
+        return self.config['Packages']['names'].split(',')
+
+    def get_files(self):
+        """Get the files from the [Files] section."""
+        return dict(self.config['Files'])
+
+    def get_scripts(self):
+        """Get the scripts from the [Scripts] section."""
+        return dict(self.config['Scripts'])
+
+    def get_users(self):
+        """Get the user from the [Users] section."""
+        return dict(self.config['Users'])
+
+    def get_user_by_name(self, username):
+        """Get the user by name from the [Users] section."""
+        return self.config['Users'][username]

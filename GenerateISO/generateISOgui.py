@@ -7,6 +7,7 @@ import subprocess
 import threading
 import configparser
 from tkinter import simpledialog
+from modifyConfig import ConfigManager
 
 class App:
     def __init__(self, root):
@@ -34,8 +35,7 @@ class App:
         # Set padding for all sides
         self.root.configure(padx=50, pady=40)
 
-        self.config = configparser.ConfigParser()
-        self.config.read("config.ini")
+        self.config = ConfigManager("config.ini")
 
         # Create main menu buttons
         self.main_menu()
@@ -68,7 +68,7 @@ class App:
         self.options_frame.pack(pady=10, fill=tk.X)  # Fill the width of the window
 
         # Dropdown for OS selection
-        operating_systems = self.config["OperatingSystem"]
+        operating_systems = self.config.config["OperatingSystem"]
         os_list = list(operating_systems.keys())
         formatted_os_list = [f"Fedora {os.split('fedora')[1]}" for os in os_list]
         self.os_selector = ttk.Combobox(self.options_frame, values=formatted_os_list)
@@ -198,37 +198,49 @@ class App:
         ttk.Label(self.root, text="Contraseña de grub", font=("Arial", 11)).pack()
         self.grub_password_entry = ttk.Entry(self.root)
         self.grub_password_entry.pack(pady=5)
-        self.grub_password_entry.insert(0, "test")
+        self.grub_password_entry.insert(0, self.config.get_grub_password())
 
         # Entry field for banner
         ttk.Label(self.root, text="Banner", font=("Arial", 11)).pack()
         self.banner_entry = tk.Text(self.root, height=5, width=30)
         self.banner_entry.pack(pady=5)
-        self.banner_entry.insert(tk.END, "ES UN DELITO CONTINUAR SIN LA DEBIDA AUTORIZACIÓN")
+        self.banner_entry.insert(tk.END, self.config.get_banner())
 
         # Checkbutton for install_clamav
         self.install_clamav_var = tk.BooleanVar()
         self.install_clamav_checkbutton = ttk.Checkbutton(self.root, text="Instalar ClamAV", variable=self.install_clamav_var)
         self.install_clamav_checkbutton.pack(pady=5)
-        self.install_clamav_var.set(True)
+        if self.config.get_install_clamav() == "yes":
+            self.install_clamav_var.set(True)
+        else:
+            self.install_clamav_var.set(False)
 
         # Checkbutton for install_cockpit
         self.install_cockpit_var = tk.BooleanVar()
         self.install_cockpit_checkbutton = ttk.Checkbutton(self.root, text="Instalar Cockpit", variable=self.install_cockpit_var)
         self.install_cockpit_checkbutton.pack(pady=5)
-        self.install_cockpit_var.set(True)
+        if self.config.get_install_cockpit() == "yes":
+            self.install_cockpit_var.set(True)
+        else:
+            self.install_cockpit_var.set(False)
 
         # Checkbutton for allow_usb
         self.allow_usb_var = tk.BooleanVar()
         self.allow_usb_checkbutton = ttk.Checkbutton(self.root, text="Permitir USB", variable=self.allow_usb_var)
         self.allow_usb_checkbutton.pack(pady=5)
-        self.allow_usb_var.set(False)
+        if self.config.get_allow_usb() == "yes":
+            self.allow_usb_var.set(True)
+        else:
+            self.allow_usb_var.set(False)
 
         # Checkbutton for allow_root
         self.allow_root_var = tk.BooleanVar()
         self.allow_root_checkbutton = ttk.Checkbutton(self.root, text="Permitir Root", variable=self.allow_root_var)
         self.allow_root_checkbutton.pack(pady=5)
-        self.allow_root_var.set(True)
+        if self.config.get_allow_root() == "yes":
+            self.allow_root_var.set(True)
+        else:
+            self.allow_root_var.set(False)
 
         # Button to return to the configuration menu
         ttk.Button(self.root, text="Volver", command=self.configuration_menu).pack(pady=5)
@@ -246,7 +258,7 @@ class App:
         self.root_password_entry = ttk.Entry(self.root)
         self.root_password_entry.pack(pady=10)
         # Set the initial value of the root password entry field to asterisks
-        self.root_password_entry.insert(0, "TODO: VALOR ACTUAL")
+        self.root_password_entry.insert(0, self.config.get_root_password())
         # Button to return to the configuration menu
         ttk.Button(self.root, text="Volver", command=self.configuration_menu).pack(pady=5)
 
@@ -255,11 +267,7 @@ class App:
         self.root.geometry("")
 
     def open_new_tab(self, event):
-        # Get the selected element from the listbox
-        selected_element = self.users_listbox.get(self.users_listbox.curselection())
-
-        # Open a new tab with the selected element
-        # TODO: Implement the logic to open a new tab
+        self.modify_user()
 
     def add_newuser(self):
         # Open a dialog to enter a new element
@@ -289,7 +297,7 @@ class App:
 
         if selected_element:
             # Open a dialog to modify the selected element
-            modified_element = simpledialog.askstring("Modificar Elemento", "Introduce los nuevos valores separados por comas (password,uid,gid,description,home)", initialvalue=",,,,")
+            modified_element = simpledialog.askstring("Modificar Elemento", "Introduce los nuevos valores separados por comas (password,uid,gid,description,home)", initialvalue=self.config.get_user_by_name(self.users_listbox.get(self.users_listbox.curselection())))
 
             # Update the selected element with the modified values
             if modified_element:
@@ -310,6 +318,9 @@ class App:
         # Listbox to display the elements
         self.users_listbox = tk.Listbox(self.root)
         self.users_listbox.pack(pady=10)
+        # Add the users to the listbox
+        for user in self.config.get_users():
+            self.users_listbox.insert(tk.END, user)
 
         # Double click event handler for opening a new tab
         self.users_listbox.bind("<Double-Button-1>", self.open_new_tab)
@@ -361,6 +372,10 @@ class App:
         # Listbox to display the elements
         self.packages_listbox = tk.Listbox(self.root)
         self.packages_listbox.pack(pady=10)
+
+        # Add the packages to the listbox
+        for package in self.config.get_packages():
+            self.packages_listbox.insert(tk.END, package)
 
         # Button to add a new element
         ttk.Button(self.root, text="Añadir Elemento", command=self.add_package).pack(pady=5)
@@ -467,6 +482,46 @@ class App:
         self.root.update_idletasks()
         self.root.geometry("")
 
+    def language_to_keyboard(self, language):
+        # Map the language to the corresponding keyboard layout
+        language_to_keyboard = {
+            "Español": "es",
+            "Inglés": "us",
+            "Francés": "fr",
+            "Alemán": "de"
+        }
+        return language_to_keyboard[language]
+
+    def language_to_os_language(self, language):
+        # Map the language to the corresponding OS language
+        language_to_os_language = {
+            "Español": "es_ES",
+            "Inglés": "en_US",
+            "Francés": "fr_FR",
+            "Alemán": "de_DE"
+        }
+        return language_to_os_language[language]
+
+    def keyboard_to_language(self, keyboard):
+        # Map the keyboard layout to the corresponding language
+        keyboard_to_language = {
+            "es": "Español",
+            "us": "Inglés",
+            "fr": "Francés",
+            "de": "Alemán"
+        }
+        return keyboard_to_language[keyboard]
+    
+    def os_language_to_language(self, os_language):
+        # Map the OS language to the corresponding language
+        os_language_to_language = {
+            "es_ES": "Español",
+            "en_US": "Inglés",
+            "fr_FR": "Francés",
+            "de_DE": "Alemán"
+        }
+        return os_language_to_language[os_language]
+
     def show_language_submenu(self):
         # Clear any existing widgets, except the logo
         self.clear_frame()
@@ -477,23 +532,23 @@ class App:
         # Label to show the submenu name
         ttk.Label(self.root, text="Configuración de Idioma", font=("Arial", 14)).pack(pady=10)
 
+        commonLanguages = ['Español', 'Inglés', 'Francés', 'Alemán']
+
         # Entry field for keyboard password
         ttk.Label(self.root, text="Teclado", font=("Arial", 11)).pack(pady=10)
-        keyboard_var = tk.StringVar()
-        keyboard_combobox = ttk.Combobox(self.root, textvariable=keyboard_var)
-        keyboard_combobox['values'] = ('Español', 'Inglés', 'Francés', 'Alemán')
+        keyboard_combobox = ttk.Combobox(self.root)
+        keyboard_combobox['values'] = commonLanguages
         keyboard_combobox.pack(pady=10)
         # Set the initial value of the keyboard combobox
-        keyboard_combobox.current(0)
+        keyboard_combobox.current(commonLanguages.index(self.keyboard_to_language(self.config.get_keyboard())))
 
         # Entry field for language
         ttk.Label(self.root, text="Idioma del SO", font=("Arial", 11)).pack(pady=10)
-        language_var = tk.StringVar()
-        language_combobox = ttk.Combobox(self.root, textvariable=language_var)
-        language_combobox['values'] = ('Español', 'Inglés', 'Francés', 'Alemán')
+        language_combobox = ttk.Combobox(self.root)
+        language_combobox['values'] = commonLanguages
         language_combobox.pack(pady=10)
         # Set the initial value of the language combobox
-        language_combobox.current(0)
+        language_combobox.current(commonLanguages.index(self.os_language_to_language(self.config.get_os_language())))
 
         # Button to return to the configuration menu
         ttk.Button(self.root, text="Volver", command=self.configuration_menu).pack(pady=5)
