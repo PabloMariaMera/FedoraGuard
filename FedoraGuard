@@ -1,34 +1,47 @@
-#!/bin/bash
+#!/usr/bin/env python3
+
+import configparser
+import sys
+import os
+from GenerateISO.modifyKickstarts import modify_kickstarts
+from ApplyNow.applyNow import kickstart_to_bash
 
 # Script FedoraGuard
 # Usage: FedoraGuard generate|applynow
 
 # Check that exactly one parameter was passed
-if [ "$#" -ne 1 ]; then
-    echo "Usage: $0  generate | applynow"
-    exit 1
-fi
+if len(sys.argv) < 2:
+    print("Usage: {} generate | applynow | gui".format(sys.argv[0]))
+    sys.exit(1)
+
+os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 # Execute the corresponding script based on the parameter
-case "$1" in
-    generate)
-        if [ -f "GenerateISO/generateISOgui.py" ]; then
-            cd GenerateISO; python3 generateISOgui.py
-        else
-            echo "Error: generateISOgui.py not found."
-            exit 1
-        fi
-        ;;
-    applynow)
-        if [ -f "applyNow.py" ]; then
-            python3 applyNow.py
-        else
-            echo "Error: applyNow.py not found."
-            exit 1
-        fi
-        ;;
-    *)
-        echo "Unrecognized parameter. Use 'generate' or 'applynow'."
-        exit 1
-        ;;
-esac
+if sys.argv[1] == "generate":
+    if os.path.isfile("GenerateISO/generateISO.py"):
+        os.chdir("GenerateISO/")
+        os.system("python3 generateISO.py " + " ".join(sys.argv[2:]))
+    else:
+        print("Error: generateISO.py not found.")
+        sys.exit(1)
+elif sys.argv[1] == "applynow":
+    if os.path.isfile("ApplyNow/applyNow.py"):
+        config = configparser.ConfigParser()
+        config.read("Common/config.ini")
+        modify_kickstarts("GenerateISO/kickstarts", config)
+        kickstart_to_bash("GenerateISO/kickstarts/ccn-stic", "ApplyNow/script.sh", config)
+        os.chdir("ApplyNow")
+        #os.system("bash script.sh")
+    else:
+        print("Error: applyNow.py not found.")
+        sys.exit(1)
+elif sys.argv[1] == "gui":
+    if os.path.isfile("FedoraGuardGUI"):
+        os.system("python3 FedoraGuardGUI")
+    else:
+        print("Error: applyNow.py not found.")
+        sys.exit(1)
+
+else:
+    print("Unrecognized parameter. Use 'generate' or 'applynow'.")
+    sys.exit(1)

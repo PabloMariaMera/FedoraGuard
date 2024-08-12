@@ -4,7 +4,24 @@
 import os
 import re
 #import crypt
-import shacrypt512
+try:
+    from GenerateISO.shacrypt512 import shacrypt
+except:
+    from shacrypt512 import shacrypt
+
+
+def modify_kickstarts(kickstart_folder, config):
+    print(f"--- Modifying kickstarts with config.ini configuration...")
+    mainks_path = os.path.join(kickstart_folder, "main.ks")
+    ccnguides_path = os.path.join(kickstart_folder, "ccn-stic")
+
+    modifyHostname(mainks_path,config["General"]["hostname"])
+    modifyRootpassword(mainks_path, ccnguides_path, config["General"]["root_password"])
+    modifyPackages(mainks_path,config["Packages"]["names"])
+    modifyLanguage(mainks_path,config["Language"]["os_language"])
+    modifyKeyboard(mainks_path,config["Language"]["keyboard"])
+    modifyUsers(mainks_path,config.items("Users"))
+    modifyCCNguides(mainks_path, ccnguides_path, config["CCNguides"])
 
 def modifyHostname(mainks_path, hostname):
     with open(mainks_path, 'r') as file:
@@ -26,7 +43,7 @@ def modifyRootpassword(mainks_path, ccnguides_path, root_password):
         root_password = "FedoraGuard"
 
     #crypt_password = crypt.crypt(root_password)
-    crypt_password = shacrypt512.shacrypt(root_password.encode('utf-8'))
+    crypt_password = shacrypt(root_password.encode('utf-8'))
     content = re.sub(r"rootpw --iscrypted \S+", f"rootpw --iscrypted {crypt_password}", content)
     
     with open(mainks_path, 'w') as file:
@@ -94,7 +111,7 @@ def modifyUsers(mainks_path, users):
                 userksline = userksline + "--name=" + user[0] + " "
                 options = user[1].split(",")
                 if options[0] != "":
-                    userksline = userksline + "--password=" + shacrypt512.shacrypt(options[0].encode('utf-8')) + " --iscrypted "
+                    userksline = userksline + "--password=" + shacrypt(options[0].encode('utf-8')) + " --iscrypted "
                 if options[1] != "":
                     userksline = userksline + "--uid=" + options[1] + " "
                 if options[2] != "":
@@ -251,7 +268,7 @@ def modifyFiles(files_folder, dest_files_path, config):
     else:
         with open(os.path.join(dest_files_path, "custom_files.ks"), 'w') as file:
             file.write("%post\necho 'No custom files added.'\n%end\n")
-    exit()
+
 def createScriptsKickstart(name, path, scripts_folder, dest_scripts_path):
     with open(os.path.join(scripts_folder, path), 'r') as file:
         script_content = file.read()

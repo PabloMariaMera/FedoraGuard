@@ -141,20 +141,6 @@ def parse_arguments():
     parser.add_argument("--iso", help="Specify the path to the RHEL ISO file")
     return parser.parse_args()
 
-
-def modify_kickstarts(kickstart_folder, config):
-    print(f"--- Modifying kickstarts with config.ini configuration...")
-    mainks_path = os.path.join(kickstart_folder, "main.ks")
-    ccnguides_path = os.path.join(kickstart_folder, "ccn-stic")
-
-    modifyHostname(mainks_path,config["General"]["hostname"])
-    modifyRootpassword(mainks_path, ccnguides_path, config["General"]["root_password"])
-    modifyPackages(mainks_path,config["Packages"]["names"])
-    modifyLanguage(mainks_path,config["Language"]["os_language"])
-    modifyKeyboard(mainks_path,config["Language"]["keyboard"])
-    modifyUsers(mainks_path,config.items("Users"))
-    modifyCCNguides(mainks_path, ccnguides_path, config["CCNguides"])
-
 def script_and_files_to_kickstart(kickstart_folder, scripts_folder, files_folder, config):
     print(f"--- Parsing scripts and files to kickstart syntax...")
     dest_scripts_path = os.path.join(kickstart_folder, "custom_scripts")
@@ -184,6 +170,8 @@ def add_files_folder(extract_to, files_folder):
 
 def main():
 
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+
     # Directories for original and custom ISOs
     original_iso_dir = os.path.join(os.getcwd(), "original_iso")
     custom_iso_dir = os.path.join(os.getcwd(), "custom_iso")
@@ -194,7 +182,7 @@ def main():
 
     # Read the configuration file
     config = configparser.ConfigParser()
-    config.read("config.ini")
+    config.read("../Common/config.ini")
 
     # Extract Fedora versions from the configuration file
     fedora_versions = {}

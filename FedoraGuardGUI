@@ -5,9 +5,9 @@ import tkinter as tk
 from tkinter import ttk, filedialog
 import subprocess
 import threading
-import configparser
 from tkinter import simpledialog
-from modifyConfig import ConfigManager
+from tkinter import messagebox
+from Common.modifyConfig import ConfigManager
 
 class App:
     def __init__(self, root):
@@ -16,7 +16,7 @@ class App:
 
         # Load the logo once
         self.logo = tk.PhotoImage(file="./logo/logo256.png")  # Cambia esta ruta a tu logo
-        
+
         # Load the icon
         self.icon = tk.PhotoImage(file="./logo/logo256.png")  # Cambia esta ruta a tu icono
 
@@ -35,7 +35,7 @@ class App:
         # Set padding for all sides
         self.root.configure(padx=50, pady=40)
 
-        self.config = ConfigManager("config.ini")
+        self.config = ConfigManager("Common/config.ini")
 
         # Create main menu buttons
         self.main_menu()
@@ -49,12 +49,50 @@ class App:
 
         # Create buttons for the main menu
         ttk.Button(self.root, text="Generar Imagen", command=self.generate_image_menu).pack(pady=5)
+        ttk.Button(self.root, text="Aplicar a este equipo", command=self.apply_image_menu).pack(pady=5)
         ttk.Button(self.root, text="Configuración", command=self.configuration_menu).pack(pady=5)
         ttk.Button(self.root, text="Salir", command=self.root.quit).pack(pady=5)
 
         # Update window size to fit content
         self.root.update_idletasks()
         self.root.geometry("")
+
+    def apply_image_menu(self):
+        if not messagebox.askyesno("Confirmación", "¿Estás seguro de que quieres aplicar la imagen a este equipo?"):
+            self.main_menu()
+            return
+
+        # Create and open a new window to display the output
+        output_window = tk.Toplevel(self.root)
+        output_window.title("Salida de Aplicación de Imagen")
+        output_window.geometry("600x400")
+
+        # Add a Text widget to show the output
+        self.output_text = tk.Text(output_window, wrap=tk.WORD, state=tk.NORMAL)
+        self.output_text.pack(expand=True, fill=tk.BOTH)
+
+        # Start the script execution in a separate thread
+        threading.Thread(target=self.run_apply_script).start()
+
+    def run_apply_script(self):
+        # Run the external script and capture output
+        process = subprocess.Popen(["./FedoraGuard", "applynow"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+
+        # Read the output and update the Text widget in the new window
+        for line in iter(process.stdout.readline, ''):
+            self.output_text.insert(tk.END, line)
+            self.output_text.yview(tk.END)
+
+        # Wait for the process to complete and capture stderr
+        stdout_output, stderr_output = process.communicate()
+
+        # Append any error messages
+        if stderr_output:
+            self.output_text.insert(tk.END, stderr_output)
+            self.output_text.yview(tk.END)
+
+        self.output_text.insert(tk.END, "\n\n--- Proceso completado, puede cerrar esta ventana. ---")
+        self.output_text.yview(tk.END)
 
     def generate_image_menu(self):
         # Clear any existing widgets, except the logo
@@ -74,7 +112,7 @@ class App:
         self.os_selector = ttk.Combobox(self.options_frame, values=formatted_os_list)
         self.os_selector.set("Selecciona Fedora")
         self.os_selector.pack(side=tk.LEFT, padx=(10, 5))  # Space between the dropdown and the separator
-        
+
         # Bind the selection event to update the file label
         self.os_selector.bind("<<ComboboxSelected>>", self.update_file_label)
 
@@ -116,15 +154,15 @@ class App:
         output_window = tk.Toplevel(self.root)
         output_window.title("Salida de Generación de Imagen")
         output_window.geometry("600x400")
-        
+
         # Add a Text widget to show the output
         self.output_text = tk.Text(output_window, wrap=tk.WORD, state=tk.NORMAL)
         self.output_text.pack(expand=True, fill=tk.BOTH)
-        
-        # Start the script execution in a separate thread
-        threading.Thread(target=self.run_script, args=(output_window,selected_file)).start()
 
-    def run_script(self, window, selected_file):
+        # Start the script execution in a separate thread
+        threading.Thread(target=self.run_generate_script, args=(output_window, selected_file)).start()
+
+    def run_generate_script(self, window, selected_file):
         # Run the external script and capture output
         if "Fedora" in selected_file:
                 option1 = "fedora"
@@ -137,21 +175,21 @@ class App:
             option1 = "rhel"
             option2 = "--iso"
             option3 = selected_file
-        process = subprocess.Popen(["python3", "-u", "./generateISO.py", option1, option2, option3], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        process = subprocess.Popen(["python3", "-u", "GenerateISO/generateISO.py", option1, option2, option3], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
         # Read the output and update the Text widget in the new window
         for line in iter(process.stdout.readline, ''):
             self.output_text.insert(tk.END, line)
             self.output_text.yview(tk.END)
-        
+
         # Wait for the process to complete and capture stderr
         stdout_output, stderr_output = process.communicate()
-        
+
         # Append any error messages
         if stderr_output:
             self.output_text.insert(tk.END, stderr_output)
             self.output_text.yview(tk.END)
-        
+
         self.output_text.insert(tk.END, "\n\n--- Proceso completado, puede cerrar esta ventana. ---")
         self.output_text.yview(tk.END)
 
@@ -242,8 +280,18 @@ class App:
         else:
             self.allow_root_var.set(False)
 
-        # Button to return to the configuration menu
-        ttk.Button(self.root, text="Volver", command=self.configuration_menu).pack(pady=5)
+        ttk.Button(self.root, text="Volver", command=lambda: [self.update_bastionado_values(), self.configuration_menu()]).pack(pady=5)
+
+    # Button to return to the configuration menu
+    def update_bastionado_values(self):
+        # Update the config object with the values from the submenu fields
+        self.config.modify_grub_password(self.grub_password_entry.get())
+        self.config.modify_banner(self.banner_entry.get("1.0", tk.END).replace("\n", ""))
+        self.config.modify_install_clamav("yes" if self.install_clamav_var.get() else "no")
+        self.config.modify_install_cockpit("yes" if self.install_cockpit_var.get() else "no")
+        self.config.modify_allow_usb("yes" if self.allow_usb_var.get() else "no")
+        self.config.modify_allow_root("yes" if self.allow_root_var.get() else "no")
+
     def show_root_password_submenu(self):
         # Clear any existing widgets, except the logo
         self.clear_frame()
@@ -259,12 +307,17 @@ class App:
         self.root_password_entry.pack(pady=10)
         # Set the initial value of the root password entry field to asterisks
         self.root_password_entry.insert(0, self.config.get_root_password())
+
         # Button to return to the configuration menu
-        ttk.Button(self.root, text="Volver", command=self.configuration_menu).pack(pady=5)
+        ttk.Button(self.root, text="Volver", command=lambda: [self.update_root_password_value(), self.configuration_menu()]).pack(pady=5)
 
         # Update window size to fit content
         self.root.update_idletasks()
         self.root.geometry("")
+
+    def update_root_password_value(self):
+        # Update the config object with the value from the submenu field
+        self.config.modify_root_password(self.root_password_entry.get())
 
     def open_new_tab(self, event):
         self.modify_user()
@@ -276,6 +329,7 @@ class App:
         # Add the new element to the listbox
         if new_element:
             self.users_listbox.insert(tk.END, new_element)
+            self.config.modify_user(new_element)
 
     def delete_user(self):
         # Get the selected element from the listbox
@@ -287,6 +341,7 @@ class App:
         # Delete the selected element from the listbox
         if selected_element:
             self.users_listbox.delete(self.users_listbox.curselection())
+            self.config.modify_user_delete(selected_element)
 
     def modify_user(self):
         # Get the selected element from the listbox
@@ -296,15 +351,64 @@ class App:
             selected_element = None
 
         if selected_element:
-            # Open a dialog to modify the selected element
-            modified_element = simpledialog.askstring("Modificar Elemento", "Introduce los nuevos valores separados por comas (password,uid,gid,description,home)", initialvalue=self.config.get_user_by_name(self.users_listbox.get(self.users_listbox.curselection())))
+            # Clear any existing widgets, except the logo
+            self.clear_frame()
 
-            # Update the selected element with the modified values
-            if modified_element:
-                # Save the modified values in a separate variable
-                password, gid, uid, description, home = modified_element.split(",")
-                # TODO: Do something with the modified values
-    
+            # Display the logo
+            self.logo_label.pack(pady=10)
+
+            # Label to show the submenu name
+            ttk.Label(self.root, text="Modificar usuario " + selected_element, font=("Arial", 14)).pack(pady=10)
+
+            passwd, uid, gid, des, home = self.config.get_user_by_name(selected_element).split(",")
+
+            # Password section
+            password_label = ttk.Label(self.root, text="Password:")
+            password_label.pack(pady=10)
+            self.password_entry = ttk.Entry(self.root)
+            self.password_entry.pack()
+            self.password_entry.insert(0, passwd)
+
+            # UID section
+            uid_label = ttk.Label(self.root, text="UID:")
+            uid_label.pack()
+            self.uid_entry = ttk.Entry(self.root)
+            self.uid_entry.pack()
+            self.uid_entry.insert(0, uid)
+
+            # GID section
+            gid_label = ttk.Label(self.root, text="GID:")
+            gid_label.pack()
+            self.gid_entry = ttk.Entry(self.root)
+            self.gid_entry.pack()
+            self.gid_entry.insert(0, gid)
+
+            # Description section
+            description_label = ttk.Label(self.root, text="Description:")
+            description_label.pack()
+            self.description_entry = ttk.Entry(self.root)
+            self.description_entry.pack()
+            self.description_entry.insert(0, des)
+
+            # Home section
+            home_label = ttk.Label(self.root, text="Home:")
+            home_label.pack()
+            self.home_entry = ttk.Entry(self.root)
+            self.home_entry.pack()
+            self.home_entry.insert(0, home)
+
+            # Button to return to the configuration menu
+            ttk.Button(self.root, text="Volver", command=lambda: [self.update_user(selected_element), self.show_users_submenu()]).pack(pady=5)
+
+            # Update window size to fit content
+            self.root.update_idletasks()
+            self.root.geometry("")
+
+
+    def update_user(self, user):
+        # Update the config object with the values from the submenu fields
+        self.config.modify_user_parameters(user, self.password_entry.get() + "," + self.uid_entry.get() + "," + self.gid_entry.get() + "," + self.description_entry.get() + "," + self.home_entry.get())
+
     def show_users_submenu(self):
         # Clear any existing widgets, except the logo
         self.clear_frame()
@@ -332,7 +436,7 @@ class App:
         ttk.Button(self.root, text="Borrar Elemento", command=self.delete_user).pack(pady=5)
         # Button to modify the selected element
         ttk.Button(self.root, text="Modificar Elemento", command=self.modify_user).pack(pady=5)
-        
+
         # Button to return to the configuration menu
         ttk.Button(self.root, text="Volver", command=self.configuration_menu).pack(pady=5)
 
@@ -384,11 +488,15 @@ class App:
         ttk.Button(self.root, text="Borrar Elemento", command=self.delete_package).pack(pady=5)
 
         # Button to return to the configuration menu
-        ttk.Button(self.root, text="Volver", command=self.configuration_menu).pack(pady=5)
+        ttk.Button(self.root, text="Volver", command=lambda: [self.update_packages_values(), self.configuration_menu()]).pack(pady=5)
 
         # Update window size to fit content
         self.root.update_idletasks()
         self.root.geometry("")
+
+    def update_packages_values(self):
+        # Update the config object with the values from the submenu fields
+        self.config.modify_packages(self.packages_listbox.get(0, tk.END))
 
     def add_script(self):
         # Open a dialog to enter a new element
@@ -423,6 +531,10 @@ class App:
         self.scripts_listbox = tk.Listbox(self.root)
         self.scripts_listbox.pack(pady=10)
 
+        # Add the files to the listbox
+        for file in self.config.get_scripts():
+            self.scripts_listbox.insert(tk.END, file)
+        
         # Button to add a new element
         ttk.Button(self.root, text="Añadir Elemento", command=self.add_script).pack(pady=5)
 
@@ -430,11 +542,15 @@ class App:
         ttk.Button(self.root, text="Borrar Elemento", command=self.delete_script).pack(pady=5)
 
         # Button to return to the configuration menu
-        ttk.Button(self.root, text="Volver", command=self.configuration_menu).pack(pady=5)
+        ttk.Button(self.root, text="Volver", command=lambda: [self.update_scripts_values(), self.configuration_menu()]).pack(pady=5)
 
         # Update window size to fit content
         self.root.update_idletasks()
         self.root.geometry("")
+
+    def update_scripts_values(self):
+        # Update the config object with the values from the submenu fields
+        self.config.modify_scripts(self.scripts_listbox.get(0, tk.END))
 
     def add_file(self):
         # Open a dialog to enter a new element
@@ -469,6 +585,10 @@ class App:
         self.files_listbox = tk.Listbox(self.root)
         self.files_listbox.pack(pady=10)
 
+        # Add the files to the listbox
+        for file in self.config.get_files():
+            self.files_listbox.insert(tk.END, file)
+
         # Button to add a new element
         ttk.Button(self.root, text="Añadir Elemento", command=self.add_file).pack(pady=5)
 
@@ -476,11 +596,15 @@ class App:
         ttk.Button(self.root, text="Borrar Elemento", command=self.delete_file).pack(pady=5)
 
         # Button to return to the configuration menu
-        ttk.Button(self.root, text="Volver", command=self.configuration_menu).pack(pady=5)
+        ttk.Button(self.root, text="Volver", command=lambda: [self.update_files_values(), self.configuration_menu()]).pack(pady=5)
 
         # Update window size to fit content
         self.root.update_idletasks()
         self.root.geometry("")
+
+    def update_files_values(self):
+        # Update the config object with the values from the submenu fields
+        self.config.modify_files(self.files_listbox.get(0, tk.END))
 
     def language_to_keyboard(self, language):
         # Map the language to the corresponding keyboard layout
@@ -511,7 +635,7 @@ class App:
             "de": "Alemán"
         }
         return keyboard_to_language[keyboard]
-    
+
     def os_language_to_language(self, os_language):
         # Map the OS language to the corresponding language
         os_language_to_language = {
@@ -536,30 +660,34 @@ class App:
 
         # Entry field for keyboard password
         ttk.Label(self.root, text="Teclado", font=("Arial", 11)).pack(pady=10)
-        keyboard_combobox = ttk.Combobox(self.root)
-        keyboard_combobox['values'] = commonLanguages
-        keyboard_combobox.pack(pady=10)
+        self.keyboard_combobox = ttk.Combobox(self.root)
+        self.keyboard_combobox['values'] = commonLanguages
+        self.keyboard_combobox.pack(pady=10)
         # Set the initial value of the keyboard combobox
-        keyboard_combobox.current(commonLanguages.index(self.keyboard_to_language(self.config.get_keyboard())))
+        self.keyboard_combobox.current(commonLanguages.index(self.keyboard_to_language(self.config.get_keyboard())))
 
         # Entry field for language
         ttk.Label(self.root, text="Idioma del SO", font=("Arial", 11)).pack(pady=10)
-        language_combobox = ttk.Combobox(self.root)
-        language_combobox['values'] = commonLanguages
-        language_combobox.pack(pady=10)
+        self.language_combobox = ttk.Combobox(self.root)
+        self.language_combobox['values'] = commonLanguages
+        self.language_combobox.pack(pady=10)
         # Set the initial value of the language combobox
-        language_combobox.current(commonLanguages.index(self.os_language_to_language(self.config.get_os_language())))
+        self.language_combobox.current(commonLanguages.index(self.os_language_to_language(self.config.get_os_language())))
 
         # Button to return to the configuration menu
-        ttk.Button(self.root, text="Volver", command=self.configuration_menu).pack(pady=5)
+        ttk.Button(self.root, text="Volver", command=lambda: [self.update_language_values(), self.configuration_menu()]).pack(pady=5)
 
         # Update window size to fit content
         self.root.update_idletasks()
         self.root.geometry("")
 
+    def update_language_values(self):
+        # Update the config object with the values from the submenu fields
+        self.config.modify_keyboard(self.language_to_keyboard(self.keyboard_combobox.get()))
+        self.config.modify_os_language(self.language_to_os_language(self.language_combobox.get()))
+
     def apply_configuration(self):
-        # Placeholder function for applying configuration
-        print("Aplicando configuración")
+        self.config.save_config()
 
     def clear_frame(self):
         # Destroy all widgets in the root window except the logo

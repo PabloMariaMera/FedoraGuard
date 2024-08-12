@@ -3,7 +3,8 @@
 echo "--------------------------------"
 echo "--APLICANDO CONTRASEÑA DE GRUB--"
 echo "--------------------------------"
-var=$(echo -e 'micontrasenagrub\nmicontrasenagrub' | grub2-mkpasswd-pbkdf2 | awk '/grub.pbkdf/{print$NF}' | cut -d' ' -f7)
+# La siguiente línea debe ser la 8
+var=$(echo -e 'test\ntest' | grub2-mkpasswd-pbkdf2 | awk '/grub.pbkdf/{print$NF}' | cut -d' ' -f7)
 echo $var
 echo set superusers="root">>/etc/grub.d/40_custom
 echo password_pbkdf2 root $var >>/etc/grub.d/40_custom
@@ -24,8 +25,8 @@ echo
 /usr/bin/chage -m 2 -M 45 -W 10 root
 
 sleep 2
-
-echo "micontrasenaroot" | passwd --stdin root;
+#La siguiente línea debe estar en la línea 13
+echo "test" | passwd --stdin root;
 
 echo
 
@@ -697,6 +698,115 @@ sed -i -e 's/^max_log_file_action.*/max_log_file_action = ROTATE/' /etc/audit/au
 systemctl enable auditd
 service auditd restart
 
+# Archivo: 06-Uninstall_no_needed_users.ks
+echo "---------------------------------------"
+echo "--DESINSTALANDO USUARIOS INNECESARIOS--"
+echo "---------------------------------------"
+
+cat /etc/shells|grep -q "/sbin/shutdown"
+
+	if ! [[ $? = 0 ]]; then
+	
+		echo "/sbin/shutdown" >> /etc/shells
+	fi
+
+cat /etc/shells|grep -q "/sbin/halt"
+
+	if ! [[ $? = 0 ]]; then
+	
+		echo "/sbin/halt" >> /etc/shells
+	fi
+	
+########################################
+#userdel -r netdump
+#userdel -r sync
+#userdel -r rpc
+#userdel -r dbus
+#userdel -r gopher
+#userdel -r ftp #si desinstalamos el ftp
+groupdel games
+groupdel floppy
+userdel games
+#userdel -r lp
+#userdel -r uucp
+#userdel -r pcap
+#userdel -r haldaemon
+#userdel -r sshd #si desinstalamos el ssh
+#userdel -r mail
+#userdel -r chrony
+#userdel -r geoclue
+#chsh -s /bin/bash root
+
+########################################
+chsh -s /sbin/shutdown shutdown
+chsh -s /sbin/halt halt
+### disable login root  change from /bin/bash to /bin/false
+#usermod -s /bin/false root
+usermod -s /bin/false nobody
+# Archivo: 07-Failed_attempts.ks
+echo "--------------------------------------------"
+echo "--BLOQUEO DE CUENTAS POR INTENTOS FALLIDOS--"
+echo "--------------------------------------------"
+echo -e "\n"
+echo " ANTES DE COMENZAR SE CREARÁ UN BACKUP DE LA CARPETA PAM.D EN EL DIRECTORIO /etc/pam.d_backup[fecha/hora]"
+echo " NO DETENGA EL SCRIPT, NI HAGA NADA HASTA QUE EL SCRIPT FINALICE"
+echo " EN CASO DE DETENCIÓN DEL SCRIPT; VUELVA A EJECUTARLO ANTES DE REINICIAR HASTA QUE FINALICE EL PROCESO CORRECTAMENTE"
+tiempo=$( date +"%d-%b-%y-%H:%M:%S" )
+mkdir /etc/pam.d_bakup_$tiempo
+cp -r /etc/pam.d/* /etc/pam.d_bakup_$tiempo
+cat >/etc/pam.d/password-auth <<EOF
+#######################################
+#PARÁMETROS GUIA CCN-STIC  SYSTEM-AUTH#
+#######################################
+
+auth        required      pam_env.so
+auth        required      pam_faillock.so preauth silent audit deny=8 even_deny_root unlock_time=0
+auth        sufficient    pam_unix.so try_first_pass nullok
+auth        [default=die] pam_faillock.so authfail audit deny=8 even_deny_root unlock_time=0
+auth        required      pam_deny.so
+
+account     required      pam_faillock.so
+account     required      pam_unix.so
+
+password    requisite     pam_pwquality.so try_first_pass local_users_only retry=3 authtok_type=
+password    requisite     pam_pwhistory.so debug use_authtok remember=20 retry=3
+password    sufficient    pam_unix.so try_first_pass use_authtok nullok sha512 shadow
+password    required      pam_deny.so
+
+session     optional      pam_keyinit.so revoke
+session     required      pam_limits.so
+-session     optional      pam_systemd.so
+session     [success=1 default=ignore] pam_succeed_if.so service in crond quiet use_uid
+session     required      pam_unix.so
+
+EOF
+cat >/etc/pam.d/system-auth <<EOF
+########################################
+#PARÁMETROS GUIA CCN-STIC PASSWORD-AUTH#
+########################################
+
+auth        required      pam_env.so
+auth        required      pam_faillock.so preauth silent audit deny=8 even_deny_root unlock_time=0
+auth        sufficient    pam_unix.so try_first_pass nullok
+auth        [default=die] pam_faillock.so authfail audit deny=8 even_deny_root unlock_time=0
+auth        required      pam_deny.so
+
+account     required      pam_faillock.so
+account     required      pam_unix.so
+password    requisite     pam_pwquality.so try_first_pass local_users_only retry=3 authtok_type=
+password    requisite     pam_pwhistory.so debug use_authtok remember=20 retry=3
+password    sufficient    pam_unix.so try_first_pass use_authtok nullok sha512 shadow
+password    required      pam_deny.so
+
+session     optional      pam_keyinit.so revoke
+session     required      pam_limits.so
+-session     optional      pam_systemd.so
+session     [success=1 default=ignore] pam_succeed_if.so service in crond quiet use_uid
+session     required      pam_unix.so
+EOF
+##para desbloquear un usuario sudo faillock --user <user> --reset
+##para ver bloqueos sudo faillock
+echo  " >>>>>>>>EL PROCESO A FINALIZADO CORRECTAMENTE<<<<<<<<"
 # Archivo: 08-Limits_permissions_passExpiration.ks
 tiempo=$( date +"%d-%b-%y-%H:%M:%S" )
 #Evitando generacion de ficheros core
@@ -990,251 +1100,6 @@ dconf update
 systemctl restart display-manager
 systemctl restart gdm.service
 
-# Archivo: 13-Antivirus_install.ks
-echo "---------------------------------"
-echo "--Instalando antivirus ClamAV--"
-echo "---------------------------------"
-dnf install -y clamav clamav-data clamav-devel clamav-filesystem clamav-update clamd
-dnf -y autoremove
-dnf -y clean all
-
-sed -i "s/#TCPSocket/TCPSocket/g" /etc/clamd.d/scan.conf
-systemctl enable --now clamav-freshclam
-systemctl enable --now clamd@scan
-
-
-# Archivo: 06-Uninstall_no_needed_users.ks
-echo "---------------------------------------"
-echo "--DESINSTALANDO USUARIOS INNECESARIOS--"
-echo "---------------------------------------"
-
-cat /etc/shells|grep -q "/sbin/shutdown"
-
-	if ! [[ $? = 0 ]]; then
-	
-		echo "/sbin/shutdown" >> /etc/shells
-	fi
-
-cat /etc/shells|grep -q "/sbin/halt"
-
-	if ! [[ $? = 0 ]]; then
-	
-		echo "/sbin/halt" >> /etc/shells
-	fi
-	
-########################################
-#userdel -r netdump
-#userdel -r sync
-#userdel -r rpc
-#userdel -r dbus
-#userdel -r gopher
-#userdel -r ftp #si desinstalamos el ftp
-groupdel games
-groupdel floppy
-userdel games
-#userdel -r lp
-#userdel -r uucp
-#userdel -r pcap
-#userdel -r haldaemon
-#userdel -r sshd #si desinstalamos el ssh
-#userdel -r mail
-#userdel -r chrony
-#userdel -r geoclue
-#chsh -s /bin/bash root
-
-########################################
-chsh -s /sbin/shutdown shutdown
-chsh -s /sbin/halt halt
-### disable login root  change from /bin/bash to /bin/false
-#usermod -s /bin/false root
-usermod -s /bin/false nobody
-# Archivo: 07-Failed_attempts.ks
-echo "--------------------------------------------"
-echo "--BLOQUEO DE CUENTAS POR INTENTOS FALLIDOS--"
-echo "--------------------------------------------"
-echo -e "\n"
-echo " ANTES DE COMENZAR SE CREARÁ UN BACKUP DE LA CARPETA PAM.D EN EL DIRECTORIO /etc/pam.d_backup[fecha/hora]"
-echo " NO DETENGA EL SCRIPT, NI HAGA NADA HASTA QUE EL SCRIPT FINALICE"
-echo " EN CASO DE DETENCIÓN DEL SCRIPT; VUELVA A EJECUTARLO ANTES DE REINICIAR HASTA QUE FINALICE EL PROCESO CORRECTAMENTE"
-tiempo=$( date +"%d-%b-%y-%H:%M:%S" )
-mkdir /etc/pam.d_bakup_$tiempo
-cp -r /etc/pam.d/* /etc/pam.d_bakup_$tiempo
-cat >/etc/pam.d/password-auth <<EOF
-#######################################
-#PARÁMETROS GUIA CCN-STIC  SYSTEM-AUTH#
-#######################################
-
-auth        required      pam_env.so
-auth        required      pam_faillock.so preauth silent audit deny=8 even_deny_root unlock_time=0
-auth        sufficient    pam_unix.so try_first_pass nullok
-auth        [default=die] pam_faillock.so authfail audit deny=8 even_deny_root unlock_time=0
-auth        required      pam_deny.so
-
-account     required      pam_faillock.so
-account     required      pam_unix.so
-
-password    requisite     pam_pwquality.so try_first_pass local_users_only retry=3 authtok_type=
-password    requisite     pam_pwhistory.so debug use_authtok remember=20 retry=3
-password    sufficient    pam_unix.so try_first_pass use_authtok nullok sha512 shadow
-password    required      pam_deny.so
-
-session     optional      pam_keyinit.so revoke
-session     required      pam_limits.so
--session     optional      pam_systemd.so
-session     [success=1 default=ignore] pam_succeed_if.so service in crond quiet use_uid
-session     required      pam_unix.so
-
-EOF
-cat >/etc/pam.d/system-auth <<EOF
-########################################
-#PARÁMETROS GUIA CCN-STIC PASSWORD-AUTH#
-########################################
-
-auth        required      pam_env.so
-auth        required      pam_faillock.so preauth silent audit deny=8 even_deny_root unlock_time=0
-auth        sufficient    pam_unix.so try_first_pass nullok
-auth        [default=die] pam_faillock.so authfail audit deny=8 even_deny_root unlock_time=0
-auth        required      pam_deny.so
-
-account     required      pam_faillock.so
-account     required      pam_unix.so
-password    requisite     pam_pwquality.so try_first_pass local_users_only retry=3 authtok_type=
-password    requisite     pam_pwhistory.so debug use_authtok remember=20 retry=3
-password    sufficient    pam_unix.so try_first_pass use_authtok nullok sha512 shadow
-password    required      pam_deny.so
-
-session     optional      pam_keyinit.so revoke
-session     required      pam_limits.so
--session     optional      pam_systemd.so
-session     [success=1 default=ignore] pam_succeed_if.so service in crond quiet use_uid
-session     required      pam_unix.so
-EOF
-##para desbloquear un usuario sudo faillock --user <user> --reset
-##para ver bloqueos sudo faillock
-echo  " >>>>>>>>EL PROCESO A FINALIZADO CORRECTAMENTE<<<<<<<<"
-# Archivo: 10-Unnecessary_items_efi.ks
-echo "----------------------------------------------------"
-echo "-- SE ELIMINARÁN PROGRAMAS Y DRIVERS INNECESARIOS --"
-echo "----------------------------------------------------"
-echo
-
-#dnf remove chrony.x86_64 firstboot.x86_64 speech-dispatcher.x86_64 postfix
-
-dnf remove -y firstboot.x86_64 speech-dispatcher.x86_64 postfix
-
-dnf remove -y xinetd telnet-server rsh-server \
-  telnet rsh ypbind ypserv tfsp-server bind \
-  vsfptd dovecot squid net-snmpd talk-server talk
-#Drivers de targetas de sonido, wifi, win tv etc..
-dnf remove -y ivtv-* iwl*firmware aic94xx-firmware
-
-echo "------------------------------------------------------------------------"
-echo "-- RESTRINGIR EL MONTAJE Y DESMONTAJE DINÁMICO DE SISTEMAS DE ARCHIVOS--"
-echo "------------------------------------------------------------------------"
-
-touch /etc/modprobe.d/limites_archivos.conf
-cat > /etc/modprobe.d/limites_archivos.conf << EOF
-install cramfs /bin/true
-install freevxfs /bin/true
-install jffs2 /bin/true
-install hfs /bin/true
-install hfsplus /bin/true
-install squashfs /bin/true
-install udf /bin/true
-#Comentar en caso de instalacion EFI
-#install fat /bin/true
-#Comentar en caso de instalacion EFI
-#install vfat /bin/true
-install cifs /bin/true
-install nfs /bin/true
-install nfsv3 /bin/true
-install nfsv4 /bin/true
-install gfs2 /bin/true
-install bnep /bin/true
-install bluetooth /bin/true
-install btusb /bin/true
-install net-pf-31 /bin/true
-EOF
-
-
-#Drivers wifi
-for i in $(find /lib/modules/$(uname -r)/kernel/drivers/net/wireless -name "*.ko*" -type f);do \
-  echo blacklist "$i" >>/etc/modprobe.d/limites-wireless.conf;done
-
-echo "-----------------------------------------------------------------------"
-echo "-- SE DESHABILITARAN Y ENMASCARARÁN DEMONIOS Y PROCESOS INNECESARIOS --"
-echo "-----------------------------------------------------------------------"
-
-
-systemctl mask bluetooth.target
-systemctl mask printer.target
-systemctl mask remote-fs.target
-systemctl mask rpcbind.target
-systemctl mask runlevel4.target
-systemctl mask runlevel5.target
-systemctl mask runlevel6.target
-systemctl mask smartcard.target
-systemctl mask sound.target
-systemctl mask console-getty.service
-systemctl mask debug-shell.service
-systemctl mask rdisc.service
-systemctl mask ctrl-alt-del.target
-systemctl mask iprutils.target
-systemctl mask fstrim.timer
-systemctl mask container-getty@.service 
-systemctl mask console-getty.service
-systemctl mask kexec.target
-systemctl mask cpupower.service
-systemctl mask ebtables.service
-systemctl mask dbus-org.freedesktop.hostname1.service
-systemctl mask dbus-org.freedesktop.portable1.service
-systemctl mask debug-shell.service
-systemctl mask dracut-cmdline.service
-systemctl mask dracut-initqueue.service
-systemctl mask dracut-mount.service
-systemctl mask dracut-pre-mount.service
-systemctl mask dracut-pre-pivot.service
-systemctl mask dracut-pre-trigger.service
-systemctl mask dracut-pre-udev.service
-systemctl mask dracut-shutdown.service
-systemctl mask getty@.service
-systemctl mask import-state.service
-systemctl mask iprdump.service
-systemctl mask iprinit.service
-systemctl mask iprupdate.service
-systemctl mask kmod-static-nodes.service
-systemctl mask loadmodules.service
-systemctl mask nftables.service
-systemctl mask nis-domainname.service
-systemctl mask plymouth-halt.service
-systemctl mask plymouth-kexec.service
-systemctl mask plymouth-poweroff.service
-systemctl mask plymouth-quit-wait.service
-systemctl mask plymouth-quit.service
-systemctl mask plymouth-read-write.service
-systemctl mask plymouth-reboot.service
-systemctl mask plymouth-start.service
-systemctl mask plymouth-switch-root.service
-systemctl mask rdisc.service
-systemctl mask rescue.service
-systemctl mask serial-getty@.service
-# Necesario DNS systemctl mask systemd-resolved.service
-systemctl mask tuned.service
-
-##########################################################################################
-echo "-------------------------------------------------"
-echo "-- SE BLOQUEARÁN LOS COMPILADORES DEL SISTEMA  --"
-echo "-------------------------------------------------"
-sudo chmod 000 /usr/bin/byacc 2>>/dev/null
-sudo chmod 000 /usr/bin/yacc 2>>/dev/null
-sudo chmod 000 /usr/bin/bcc 2>>/dev/null
-sudo chmod 000 /usr/bin/kgcc 2>>/dev/null
-sudo chmod 000 /usr/bin/cc 2>>/dev/null
-sudo chmod 000 /usr/bin/gcc 2>>/dev/null
-sudo chmod 000 /usr/bin/*c++ 2>>/dev/null
-sudo chmod 000 /usr/bin/*g++ 2>>/dev/null
-
-
 # Archivo: 10-Unnecessary_items.ks
 echo "----------------------------------------------------"
 echo "-- SE ELIMINARÁN PROGRAMAS Y DRIVERS INNECESARIOS --"
@@ -1358,6 +1223,129 @@ sudo chmod 000 /usr/bin/*c++ 2>>/dev/null
 sudo chmod 000 /usr/bin/*g++ 2>>/dev/null
 
 
+# Archivo: 10-Unnecessary_items_efi.ks
+echo "----------------------------------------------------"
+echo "-- SE ELIMINARÁN PROGRAMAS Y DRIVERS INNECESARIOS --"
+echo "----------------------------------------------------"
+echo
+
+#dnf remove chrony.x86_64 firstboot.x86_64 speech-dispatcher.x86_64 postfix
+
+dnf remove -y firstboot.x86_64 speech-dispatcher.x86_64 postfix
+
+dnf remove -y xinetd telnet-server rsh-server \
+  telnet rsh ypbind ypserv tfsp-server bind \
+  vsfptd dovecot squid net-snmpd talk-server talk
+#Drivers de targetas de sonido, wifi, win tv etc..
+dnf remove -y ivtv-* iwl*firmware aic94xx-firmware
+
+echo "------------------------------------------------------------------------"
+echo "-- RESTRINGIR EL MONTAJE Y DESMONTAJE DINÁMICO DE SISTEMAS DE ARCHIVOS--"
+echo "------------------------------------------------------------------------"
+
+touch /etc/modprobe.d/limites_archivos.conf
+cat > /etc/modprobe.d/limites_archivos.conf << EOF
+install cramfs /bin/true
+install freevxfs /bin/true
+install jffs2 /bin/true
+install hfs /bin/true
+install hfsplus /bin/true
+install squashfs /bin/true
+install udf /bin/true
+#Comentar en caso de instalacion EFI
+#install fat /bin/true
+#Comentar en caso de instalacion EFI
+#install vfat /bin/true
+install cifs /bin/true
+install nfs /bin/true
+install nfsv3 /bin/true
+install nfsv4 /bin/true
+install gfs2 /bin/true
+install bnep /bin/true
+install bluetooth /bin/true
+install btusb /bin/true
+install net-pf-31 /bin/true
+EOF
+
+
+#Drivers wifi
+for i in $(find /lib/modules/$(uname -r)/kernel/drivers/net/wireless -name "*.ko*" -type f);do \
+  echo blacklist "$i" >>/etc/modprobe.d/limites-wireless.conf;done
+
+echo "-----------------------------------------------------------------------"
+echo "-- SE DESHABILITARAN Y ENMASCARARÁN DEMONIOS Y PROCESOS INNECESARIOS --"
+echo "-----------------------------------------------------------------------"
+
+
+systemctl mask bluetooth.target
+systemctl mask printer.target
+systemctl mask remote-fs.target
+systemctl mask rpcbind.target
+systemctl mask runlevel4.target
+systemctl mask runlevel5.target
+systemctl mask runlevel6.target
+systemctl mask smartcard.target
+systemctl mask sound.target
+systemctl mask console-getty.service
+systemctl mask debug-shell.service
+systemctl mask rdisc.service
+systemctl mask ctrl-alt-del.target
+systemctl mask iprutils.target
+systemctl mask fstrim.timer
+systemctl mask container-getty@.service 
+systemctl mask console-getty.service
+systemctl mask kexec.target
+systemctl mask cpupower.service
+systemctl mask ebtables.service
+systemctl mask dbus-org.freedesktop.hostname1.service
+systemctl mask dbus-org.freedesktop.portable1.service
+systemctl mask debug-shell.service
+systemctl mask dracut-cmdline.service
+systemctl mask dracut-initqueue.service
+systemctl mask dracut-mount.service
+systemctl mask dracut-pre-mount.service
+systemctl mask dracut-pre-pivot.service
+systemctl mask dracut-pre-trigger.service
+systemctl mask dracut-pre-udev.service
+systemctl mask dracut-shutdown.service
+systemctl mask getty@.service
+systemctl mask import-state.service
+systemctl mask iprdump.service
+systemctl mask iprinit.service
+systemctl mask iprupdate.service
+systemctl mask kmod-static-nodes.service
+systemctl mask loadmodules.service
+systemctl mask nftables.service
+systemctl mask nis-domainname.service
+systemctl mask plymouth-halt.service
+systemctl mask plymouth-kexec.service
+systemctl mask plymouth-poweroff.service
+systemctl mask plymouth-quit-wait.service
+systemctl mask plymouth-quit.service
+systemctl mask plymouth-read-write.service
+systemctl mask plymouth-reboot.service
+systemctl mask plymouth-start.service
+systemctl mask plymouth-switch-root.service
+systemctl mask rdisc.service
+systemctl mask rescue.service
+systemctl mask serial-getty@.service
+# Necesario DNS systemctl mask systemd-resolved.service
+systemctl mask tuned.service
+
+##########################################################################################
+echo "-------------------------------------------------"
+echo "-- SE BLOQUEARÁN LOS COMPILADORES DEL SISTEMA  --"
+echo "-------------------------------------------------"
+sudo chmod 000 /usr/bin/byacc 2>>/dev/null
+sudo chmod 000 /usr/bin/yacc 2>>/dev/null
+sudo chmod 000 /usr/bin/bcc 2>>/dev/null
+sudo chmod 000 /usr/bin/kgcc 2>>/dev/null
+sudo chmod 000 /usr/bin/cc 2>>/dev/null
+sudo chmod 000 /usr/bin/gcc 2>>/dev/null
+sudo chmod 000 /usr/bin/*c++ 2>>/dev/null
+sudo chmod 000 /usr/bin/*g++ 2>>/dev/null
+
+
 # Archivo: 11-Orphan_packages.ks
 echo "---------------------------------"
 echo "--ELIMINANDO PAQUETES HUÉRFANOS--"
@@ -1433,4 +1421,24 @@ systemctl enable usbguard.service
 systemctl restart usbguard.service
 systemctl status usbguard.service
 echo ">>>>El SCRIPT ha finalizado<<<<"
+
+# Archivo: 13-Antivirus_install.ks
+echo "---------------------------------"
+echo "--Instalando antivirus ClamAV--"
+echo "---------------------------------"
+dnf install -y clamav clamav-data clamav-devel clamav-filesystem clamav-update clamd
+dnf -y autoremove
+dnf -y clean all
+
+sed -i "s/#TCPSocket/TCPSocket/g" /etc/clamd.d/scan.conf
+systemctl enable --now clamav-freshclam
+systemctl enable --now clamd@scan
+
+
+# Archivo: 14-Configure_cockpit.ks
+
+dnf -y install cockpit
+systemctl enable cockpit.socket
+firewall-cmd --permanent --add-port=9090/tcp
+
 

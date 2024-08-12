@@ -65,22 +65,31 @@ class ConfigManager:
 
     def modify_packages(self, new_packages):
         """Modify the packages in the [Packages] section."""
-        self.config['Packages']['names'] = ', '.join(new_packages)
+        self.config['Packages']['names'] = ','.join(new_packages)
 
     def modify_files(self, new_files):
         """Modify the files in the [Files] section."""
-        for key, value in new_files.items():
-            self.config['Files'][key] = value
+        self.config['Files'] = {}
+        for i in new_files:
+            self.config['Files'][i.split('.')[0]] = i
     
     def modify_scripts(self, new_scripts):
         """Modify the scripts in the [Scripts] section."""
-        for key, value in new_scripts.items():
-            self.config['Scripts'][key] = value
-    
+        self.config['Scripts'] = {}
+        for i in new_scripts:
+            self.config['Scripts'][i.split('.')[0]] = i
+
     def modify_user(self, new_user):
         """Modify the user in the [User] section."""
-        for key, value in new_user.items():
-            self.config['User'][key] = value
+        self.config['Users'][new_user] = ",,,,"
+
+    def modify_user_delete(self, user):
+        """Delete the user in the [User] section."""
+        del self.config['Users'][user]
+
+    def modify_user_parameters(self, user, parameters):
+        """Modify the user in the [User] section."""
+        self.config['Users'][user] = parameters
 
     def get_hostname(self):
         """Get the hostname from the [General] section."""
@@ -136,11 +145,11 @@ class ConfigManager:
 
     def get_files(self):
         """Get the files from the [Files] section."""
-        return dict(self.config['Files'])
+        return list(self.config['Files'].values())
 
     def get_scripts(self):
         """Get the scripts from the [Scripts] section."""
-        return dict(self.config['Scripts'])
+        return list(self.config['Scripts'].values())
 
     def get_users(self):
         """Get the user from the [Users] section."""

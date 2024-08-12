@@ -10,7 +10,7 @@ echo
 
 sleep 2
 #La siguiente línea debe estar en la línea 13
-echo "test" | passwd --stdin root;
+echo "root" | passwd --stdin root;
 
 echo
 
