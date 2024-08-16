@@ -80,11 +80,11 @@ check_configuration() {
     elif [ "$item" == "kernel_parameters" ]; then
         echo -n "Kernel parameters: "
         some_params=(
-            "net.ipv4.conf.all.send_redirects=0"
-            "net.ipv4.conf.default.accept_redirects=0"
-            "net.ipv6.conf.all.accept_source_route=0"
-            "net.ipv4.icmp_echo_ignore_broadcasts=1"
-            "fs.suid_dumpable=0"
+            "net.ipv4.conf.all.send_redirects = 0"
+            "net.ipv4.conf.default.accept_redirects = 0"
+            "net.ipv6.conf.all.accept_source_route = 0"
+            "net.ipv4.icmp_echo_ignore_broadcasts = 1"
+            "fs.suid_dumpable = 0"
         )
         for param in "${some_params[@]}"; do
             if ! grep -q "^$param" /etc/sysctl.conf; then
@@ -173,7 +173,7 @@ check_configuration() {
 
     elif [ "$item" == "password_expiration" ]; then
         echo -n "Password expiration: "
-        if grep -q "PASS_MAX_DAYS  45" /etc/login.defs && grep -q "PASS_MIN_LEN  12" /etc/login.defs; then
+        if grep -q "PASS_MAX_DAYS  45" /etc/login.defs && grep -q "PASS_WARN_AGE  10" /etc/login.defs; then
             return 0  # Configurado
         else
             return 1  # No configurado
@@ -346,11 +346,11 @@ check_configuration() {
                 fi
             done
         done
-        return 1  # No configurado
+        return 0  # Configurado
 
     elif [ "$item" == "no_orphan_packages" ]; then
         echo -n "No orphan packages: "
-        if false; then
+        if [[ $(package-cleanup -q --orphans | wc -l) == "0" ]] || [[ $(package-cleanup -q --leaves | wc -l) == "0" ]]; then
             return 0  # Configurado
         else
             return 1  # No configurado
@@ -358,7 +358,7 @@ check_configuration() {
 
     elif [ "$item" == "usbguard_installed" ]; then
         echo -n "USBGuard installed: "
-        if yum list installed usbguard --quiet; then
+        if rpm -q usbguard &> /dev/null; then
             return 0  # Configurado
         else
             return 1  # No configurado
@@ -366,7 +366,10 @@ check_configuration() {
 
     elif [ "$item" == "usbguard_config" ]; then
         echo -n "USBGuard config: "
-        if false; then
+        if [ ! -f "/etc/usbguard/usbguard-daemon.conf" ]; then
+            return 1  # No configurado
+        fi
+        if grep -q "ImplicitPolicyTarget=block" /etc/usbguard/usbguard-daemon.conf && grep -q "DeviceRulesWithPort=false" /etc/usbguard/usbguard-daemon.conf; then
             return 0  # Configurado
         else
             return 1  # No configurado
@@ -374,7 +377,7 @@ check_configuration() {
 
     elif [ "$item" == "usbguard_daemon" ]; then
         echo -n "USBGuard daemon: "
-        if false; then
+        if systemctl is-active usbguard.service > /dev/null 2>&1; then
             return 0  # Configurado
         else
             return 1  # No configurado
@@ -382,7 +385,7 @@ check_configuration() {
 
     elif [ "$item" == "clamav_installed" ]; then
         echo -n "ClamAV installed: "
-        if false; then
+        if rpm -q clamav &> /dev/null; then
             return 0  # Configurado
         else
             return 1  # No configurado
@@ -398,7 +401,7 @@ check_configuration() {
 
     elif [ "$item" == "cockpit_installed" ]; then
         echo -n "Cockpit installed: "
-        if false; then
+        if rpm -q cockpit &> /dev/null; then
             return 0  # Configurado
         else
             return 1  # No configurado
