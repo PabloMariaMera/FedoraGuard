@@ -1,6 +1,8 @@
 %post --log=/root/logs/12-USB_limitation.ks
 #!/bin/bash
 
+dnf install -y usbguard
+
 #evitando usb 
 echo "----------------------------------------------------------------"
 echo "-- SE DENEGARÁ EL ACCESO A LOS DISPOSITIVOS DE ALMACENAMIENTO --"

@@ -23,9 +23,7 @@ else
     echo "Sistema operativo no soportado: $system_release"
 fi
 
-echo -e "80\n# Instalando alguna dependencia más..." >&3
-
-dnf install policycoreutils-python-utils usbguard -y
+dnf install -y policycoreutils-python-utils
 
 echo -e "100\n# Kickstart installGraphicalEnv finalizado." >&3
 exec 3>&-

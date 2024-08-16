@@ -42,6 +42,6 @@ userdel games
 chsh -s /sbin/shutdown shutdown
 chsh -s /sbin/halt halt
 ### disable login root  change from /bin/bash to /bin/false
-#usermod -s /bin/false root
+usermod -s /bin/false root
 usermod -s /bin/false nobody
 %end

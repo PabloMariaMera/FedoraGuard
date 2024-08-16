@@ -8,6 +8,7 @@ dnf -y autoremove
 dnf -y clean all
 
 sed -i "s/#TCPSocket/TCPSocket/g" /etc/clamd.d/scan.conf
+sed -i "s/Example/#Example/g" /etc/clamd.d/scan.conf
 systemctl enable --now clamav-freshclam
 systemctl enable --now clamd@scan
 

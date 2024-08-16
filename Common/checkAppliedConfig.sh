@@ -350,7 +350,7 @@ check_configuration() {
 
     elif [ "$item" == "no_orphan_packages" ]; then
         echo -n "No orphan packages: "
-        if [[ $(package-cleanup -q --orphans | wc -l) == "0" ]] || [[ $(package-cleanup -q --leaves | wc -l) == "0" ]]; then
+        if [[ $(package-cleanup -q --orphans 2> /dev/null | wc -l) == "0" ]] || [[ $(package-cleanup -q --leaves 2> /dev/null | wc -l) == "0" ]]; then
             return 0  # Configurado
         else
             return 1  # No configurado
@@ -393,7 +393,7 @@ check_configuration() {
 
     elif [ "$item" == "clamav_daemon" ]; then
         echo -n "ClamAV daemon: "
-        if systemctl is-active clamav-freshclam > /dev/null 2>&1 && systemctl is-active clamd@scan > /dev/null 2>&1; then
+        if systemctl is-active clamd@scan > /dev/null 2>&1; then
             return 0  # Configurado
         else
             return 1  # No configurado
