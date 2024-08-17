@@ -35,15 +35,9 @@ exec 3>&-
 fi
 %end
 
-%post --log=/mnt/sysimage/installationlognochroot.txt
+%post --log=/installationlogepel.txt
 if [[ $(cat /etc/system-release) == *"Red Hat"* ]]; then
-exec 3>/tmp/graphical-feedback
-echo -e "0\n# Configurar EPEL..." >&3
-
-echo -e "80\n# Configurando repositorio remoto EPEL..." >&3
+echo "Configurando repositorio remoto EPEL..." 
 dnf -y install https://dl.fedoraproject.org/pub/epel/epel-release-latest-$(rpm -E '%{rhel}').noarch.rpm
-
-echo -e "100\n# Kickstart copyRHELrepos finalizado." >&3
-exec 3>&-
 fi
 %end

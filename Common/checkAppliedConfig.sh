@@ -220,6 +220,9 @@ check_configuration() {
 
     elif [ "$item" == "login_banner" ]; then
         echo -n "Login banner: "
+        if [ ! -d "/etc/dconf/db/gdm.d/" ]; then
+            return 1  # No configurado
+        fi
         if grep -qr "banner-message-enable=true" /etc/dconf/db/gdm.d/; then
             return 0  # Configurado
         else
@@ -228,6 +231,9 @@ check_configuration() {
 
     elif [ "$item" == "no_user_list" ]; then
         echo -n "No login user list: "
+        if [ ! -d "/etc/dconf/db/gdm.d/" ]; then
+            return 1  # No configurado
+        fi
         if grep -qr "disable-user-list=true" /etc/dconf/db/gdm.d/; then
             return 0  # Configurado
         else
@@ -236,6 +242,9 @@ check_configuration() {
 
     elif [ "$item" == "inactivity_blackscreen" ]; then
         echo -n "Inactivity blackscreen: "
+        if [ ! -d "/etc/dconf/db/local.d/" ]; then
+            return 1  # No configurado
+        fi
         if grep -qr "idle-delay=" /etc/dconf/db/local.d/; then
             return 0  # Configurado
         else
@@ -244,6 +253,9 @@ check_configuration() {
 
     elif [ "$item" == "inactivity_lock" ]; then
         echo -n "Inactivity lock: "
+        if [ ! -d "/etc/dconf/db/local.d/" ]; then
+            return 1  # No configurado
+        fi
         if grep -qr "lock-enabled=true" /etc/dconf/db/local.d/; then
             return 0  # Configurado
         else
