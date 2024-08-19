@@ -65,7 +65,7 @@ AuditFilePath=/var/log/usbguard/usbguard-audit.log
 EOF
 systemctl enable usbguard.service
 systemctl restart usbguard.service
-systemctl status usbguard.service
+#systemctl status usbguard.service
 echo ">>>>El SCRIPT ha finalizado<<<<"
 
 %end

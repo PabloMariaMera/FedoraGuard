@@ -140,7 +140,7 @@ echo "El script ha finalizado de configurar los parámetros de gnome"
 echo "Se va a cerrar sesión para aplicar los cambios"
 
 dconf update
-systemctl restart display-manager
-systemctl restart gdm.service
+#systemctl restart display-manager
+#systemctl restart gdm.service
 
 %end

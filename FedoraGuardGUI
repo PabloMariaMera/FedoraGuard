@@ -363,7 +363,7 @@ class App:
             passwd, uid, gid, des, home = self.config.get_user_by_name(selected_element).split(",")
 
             # Password section
-            password_label = ttk.Label(self.root, text="Password:")
+            password_label = ttk.Label(self.root, text="Contraseña:")
             password_label.pack(pady=10)
             self.password_entry = ttk.Entry(self.root)
             self.password_entry.pack()
@@ -384,7 +384,7 @@ class App:
             self.gid_entry.insert(0, gid)
 
             # Description section
-            description_label = ttk.Label(self.root, text="Description:")
+            description_label = ttk.Label(self.root, text="Descripción:")
             description_label.pack()
             self.description_entry = ttk.Entry(self.root)
             self.description_entry.pack()

@@ -14,7 +14,7 @@ from modifyKickstarts import *
 def run_command(command):
     result = subprocess.run(command, shell=True, capture_output=True, text=True)
     if result.returncode != 0:
-        print(f"### Error running command: {command}\n{result.stderr}")
+        print(f"### Error ejecutando el comando: {command}\n{result.stderr}")
         sys.exit(1)
     return result.stdout
 
@@ -29,22 +29,22 @@ def run_command_real_time(command):
             sys.stdout.flush()
     rc = process.poll()
     if rc != 0:
-        print(f"### Error running command: {command}")
+        print(f"### Error ejecutando el comando: {command}")
         sys.exit(1)
 
 def download_iso(url, output):
     if os.path.isfile(output):
-        print(f"--- ISO {output} already exists in original_iso. Skipping download.")
+        print(f"--- ISO {output} ya existe en original_iso. Omitiendo descarga.")
     else:
-        print(f"--- Downloading ISO from {url}...")
+        print(f"--- Descargando ISO desde {url}...")
         run_command_real_time(f"wget --progress=bar:force {url} -O {output}")
 
 def extract_iso(iso_path, extract_to):
     if os.path.exists(extract_to):
-        print(f"--- Directory {extract_to} already exists. Skipping extraction.")
+        print(f"--- El directorio {extract_to} ya existe. Omitiendo extracción.")
         os.chmod(extract_to, 0o777)  # Ensure the directory is writable
     else:
-        print(f"--- Extracting ISO {iso_path} to {extract_to}...")
+        print(f"--- Extrayendo ISO {iso_path} a {extract_to}...")
         os.makedirs(extract_to, exist_ok=True)
         os.chmod(extract_to, 0o777)  # Ensure the directory is writable
         mount_point = os.path.join(os.getcwd(), "mnt/fuse_iso_mount")
@@ -69,7 +69,7 @@ def extract_iso(iso_path, extract_to):
 
 def validate_kickstart(kickstart_path):
     # Ensure the kickstart files are in UTF-8 encoding
-    print(f"--- Validating kickstart files...")
+    print(f"--- Validando ficheros kickstart...")
     for root, dirs, files in os.walk(kickstart_path):
         for file in files:
             if file != ".gitkeep":  # Exclude .gitkeep file
@@ -85,14 +85,14 @@ def validate_kickstart(kickstart_path):
                     run_command(f"ksvalidator {file_path}")
                     #print(f"Kickstart file {file_path} is valid.")
                 except subprocess.CalledProcessError as e:
-                    print(f"### Kickstart validation failed for {file_path}: {e.output}")
+                    print(f"### La validación de kickstarts falló para {file_path}: {e.output}")
                     sys.exit(1)
 
 def add_kickstart_folder(extract_to, kickstart_folder):
     # Validate the kickstart files before adding them
     validate_kickstart(kickstart_folder)
 
-    print(f"--- Adding Kickstart folder {kickstart_folder} to {extract_to}...")
+    print(f"--- Añadiendo carpeta de kickstarts {kickstart_folder} a {extract_to}...")
     dest_path = os.path.join(extract_to, "kickstarts")
     if os.path.exists(dest_path):
         shutil.rmtree(dest_path)  # Remove any existing kickstarts folder
@@ -100,7 +100,7 @@ def add_kickstart_folder(extract_to, kickstart_folder):
     shutil.copytree(kickstart_folder, dest_path)
 
 def modify_boot_config(extract_to, volume_label, os_name, os_version):
-    print(f"--- Modifying boot configuration in {extract_to}...")
+    print(f"--- Modificando configuración de arranque en {extract_to}...")
     
     # Define paths for the original and copy of isolinux.cfg
     config_path = os.path.join(extract_to, "isolinux", "isolinux.cfg")
@@ -121,11 +121,11 @@ def modify_boot_config(extract_to, volume_label, os_name, os_version):
         file.write(f"    APPEND initrd=initrd.img rd.live.check=0 inst.stage2=hd:LABEL={volume_label} inst.ks=cdrom:/kickstarts/main.ks\n")
 
 def create_iso(extract_to, output_iso, volume_label):
-    print(f"--- Creating new ISO {output_iso} from {extract_to}...")
+    print(f"--- Creando nueva ISO {output_iso} de {extract_to}...")
     run_command(f"cd {extract_to} && genisoimage -joliet-long -o {output_iso} -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -J -R -V '{volume_label}' .")
 
 def implantmd5(output_iso):
-    print(f"--- Implanting MD5 checksum...")
+    print(f"--- Implantando suma de verificación MD5...")
     run_command(f"implantisomd5 {output_iso}")
 
 def get_volume_label(iso_path):
@@ -135,14 +135,14 @@ def get_volume_label(iso_path):
     return match.group(1) if match else "UNKNOWN"
 
 def parse_arguments():
-    parser = argparse.ArgumentParser(description="Generate custom ISO")
-    parser.add_argument("distribution", choices=["fedora", "rhel"], help="Select distribution: fedora or rhel")
-    parser.add_argument("--version", choices=["28", "34"], help="Specify Fedora version: 28 or 34")
-    parser.add_argument("--iso", help="Specify the path to the RHEL ISO file")
+    parser = argparse.ArgumentParser(description="Generar ISO personalizada")
+    parser.add_argument("distribucion", choices=["fedora", "rhel"], help="Elige distribución: fedora or rhel")
+    parser.add_argument("--version", choices=["28", "34"], help="Versión de Fedora: 28 or 34")
+    parser.add_argument("--iso", help="Especificar la ruta a ISO de RHEL")
     return parser.parse_args()
 
 def script_and_files_to_kickstart(kickstart_folder, scripts_folder, files_folder, config):
-    print(f"--- Parsing scripts and files to kickstart syntax...")
+    print(f"--- Pasando scripts y ficheros a kickstarts...")
     dest_scripts_path = os.path.join(kickstart_folder, "custom_scripts")
     dest_files_path = os.path.join(kickstart_folder, "custom_files")
 
@@ -161,7 +161,7 @@ def script_and_files_to_kickstart(kickstart_folder, scripts_folder, files_folder
     modifyFiles(files_folder, dest_files_path, config)
 
 def add_files_folder(extract_to, files_folder):
-    print(f"--- Adding Files folder {files_folder} to {extract_to}...")
+    print(f"--- Añadiendo la carpeta {files_folder} a {extract_to}...")
     dest_path = os.path.join(extract_to, "files")
     if os.path.exists(dest_path):
         shutil.rmtree(dest_path)  # Remove any existing files folder
@@ -194,28 +194,28 @@ def main():
 
     args = parse_arguments()
 
-    if args.distribution == "fedora":
+    if args.distribucion == "fedora":
         if args.version:
             version = args.version
         else:
-            print("### Please specify the Fedora version using the --version option")
+            print("### Por favor, especifica la versión de Fedora usando la opción --version")
             return
         iso_url = fedora_versions.get(version)
         if not iso_url:
-            print(f"### Invalid Fedora version: {fedora_versions}")
+            print(f"### Versión de Fedora inválida: {fedora_versions}")
             return
 
         downloaded_iso = os.path.join(original_iso_dir, f"Fedora-Server-dvd-x86_64-{version}.iso")
         download_iso(iso_url, downloaded_iso)
 
-    elif args.distribution == "rhel":
+    elif args.distribucion == "rhel":
         if args.iso:
             iso_path = args.iso
         else:
-            print("### Please specify the path to the RHEL ISO file using the --iso option")
+            print("### Por favor, especifica la ruta de la ISO de RHEL ISO usando la opción --iso")
             return
         if not os.path.isfile(iso_path):
-            print("## #RHEL ISO file not found")
+            print("## ISO de RHEL no encontrada")
             return
 
         downloaded_iso = iso_path
@@ -223,14 +223,14 @@ def main():
         version = rhel_version_match.group(1) if rhel_version_match else "unknown"
 
     else:
-        print("### Invalid choice")
+        print("### Opción inválida.")
         return
 
     kickstart_folder = "kickstarts"
     files_folder = "add_files"
     scripts_folder = "add_scripts"
     timestamp = time.strftime("%Y%m%d-%H%M%S")
-    output_iso = os.path.join(custom_iso_dir, f"{args.distribution}-{version}-FedoraGuard-{timestamp}.iso")
+    output_iso = os.path.join(custom_iso_dir, f"{args.distribucion}-{version}-FedoraGuard-{timestamp}.iso")
     extract_to = os.path.join(custom_iso_dir, f"extracted_iso_{os.path.basename(downloaded_iso).split('.')[0]}")
     volume_label = "FedoraGuard"
 
@@ -239,11 +239,11 @@ def main():
     script_and_files_to_kickstart(kickstart_folder, scripts_folder, files_folder, config)
     add_kickstart_folder(extract_to, kickstart_folder)
     add_files_folder(extract_to, files_folder)
-    modify_boot_config(extract_to, volume_label, args.distribution, version)
+    modify_boot_config(extract_to, volume_label, args.distribucion, version)
     create_iso(extract_to, output_iso, volume_label)
     implantmd5(output_iso)
     
-    print(f"--- Custom ISO created successfully: {output_iso}")
+    print(f"--- ISO personalizada creada: {output_iso}")
 
 if __name__ == "__main__":
     main()

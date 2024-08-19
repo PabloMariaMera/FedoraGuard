@@ -11,7 +11,7 @@ except:
 
 
 def modify_kickstarts(kickstart_folder, config):
-    print(f"--- Modifying kickstarts with config.ini configuration...")
+    print(f"--- Modificando kickstarts con la configuración de config.ini...")
     mainks_path = os.path.join(kickstart_folder, "main.ks")
     ccnguides_path = os.path.join(kickstart_folder, "ccn-stic")
 
@@ -247,7 +247,7 @@ def modifyScripts(scripts_folder, dest_scripts_path, config):
                 createScriptsKickstart(name, path, scripts_folder, dest_scripts_path)
                 path_list.append(name+".ks")
             else:
-                print(f"Script {path} not found in {scripts_folder}")
+                print(f"Script {path} no encontrado en {scripts_folder}")
                 exit(1)
         addToCustomScriptsKs(path_list, dest_scripts_path)
     else:
@@ -262,7 +262,7 @@ def modifyFiles(files_folder, dest_files_path, config):
                 createFilesKickstart(name, path, dest_files_path)
                 path_list.append(name+".ks")
             else:
-                print(f"File {path} not found in {files_folder}")
+                print(f"Fichero {path} no encontrado en {files_folder}")
                 exit(1)
         addToCustomFilesKs(path_list, dest_files_path)
     else:

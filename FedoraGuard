@@ -11,37 +11,42 @@ from ApplyNow.applyNow import kickstart_to_bash
 
 # Check that exactly one parameter was passed
 if len(sys.argv) < 2:
-    print("Usage: {} generate | applynow | gui".format(sys.argv[0]))
+    print("Uso: {} generar | aplicarahora | gui".format(sys.argv[0]))
     sys.exit(1)
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 # Execute the corresponding script based on the parameter
-if sys.argv[1] == "generate":
+if sys.argv[1] == "generar":
     if os.path.isfile("GenerateISO/generateISO.py"):
         os.chdir("GenerateISO/")
         os.system("python3 generateISO.py " + " ".join(sys.argv[2:]))
     else:
-        print("Error: generateISO.py not found.")
+        print("Error: generateISO.py no encontrado.")
         sys.exit(1)
-elif sys.argv[1] == "applynow":
-    if os.path.isfile("ApplyNow/applyNow.py"):
-        config = configparser.ConfigParser()
-        config.read("Common/config.ini")
-        modify_kickstarts("GenerateISO/kickstarts", config)
-        kickstart_to_bash("GenerateISO/kickstarts/ccn-stic", "ApplyNow/script.sh", config)
-        os.chdir("ApplyNow")
-        #os.system("bash script.sh")
+elif sys.argv[1] == "aplicarahora":
+    if os.geteuid() != 0:
+        print("Error: El script debe ejecutarse como root.")
+        sys.exit(1)
     else:
-        print("Error: applyNow.py not found.")
-        sys.exit(1)
+        if os.path.isfile("ApplyNow/applyNow.py"):
+            config = configparser.ConfigParser()
+            config.read("Common/config.ini")
+            modify_kickstarts("GenerateISO/kickstarts", config)
+            kickstart_to_bash("GenerateISO/kickstarts/ccn-stic", "ApplyNow/script.sh", config)
+            os.chdir("ApplyNow")
+            os.system("bash script.sh")
+            print("\n--- Script finalizado. Deberías reiniciar ahora. ---")
+        else:
+            print("Error: applyNow.py no encontrado.")
+            sys.exit(1)
 elif sys.argv[1] == "gui":
     if os.path.isfile("FedoraGuardGUI"):
         os.system("python3 FedoraGuardGUI")
     else:
-        print("Error: applyNow.py not found.")
+        print("Error: applyNow.py no encontrado.")
         sys.exit(1)
 
 else:
-    print("Unrecognized parameter. Use 'generate' or 'applynow'.")
+    print("Parámetros no reconocidos. Usa 'generar', 'aplicarahora' o 'gui'.")
     sys.exit(1)

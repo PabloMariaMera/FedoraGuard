@@ -7,5 +7,5 @@ dnf install -y yum-utils
 dnf -y autoremove
 dnf -y clean all
 dnf -y remove `package-cleanup --orphans`
-dnf -y remove `package-cleanup --leaves | grep -v cracklib-dicts`
+dnf -y remove `package-cleanup --leaves | grep -v cracklib-dicts | grep -v libsss_sudo`
 %end

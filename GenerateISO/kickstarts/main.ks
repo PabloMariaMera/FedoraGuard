@@ -27,12 +27,12 @@ lang es_ES
 #
 # Root password
 #
-rootpw --iscrypted $6$4qz1wivqV5BDZqyY$/HNq8651UCQx5f5n0REKzc4sI0MBkV/wTl02BJNn51PVIyL66PIzs/49OKfSARXEDQjPRvQS9UApJz4884sxl0
+rootpw --iscrypted $6$9Ftl5FCEE6D90MJ7$U3ItJ.VIqOWGyhE7CIeXw6bbPaQQpRNZy6wKbdCjrYvKuKmBvujwcTvTn1uOSnj1LcwbNUshX.FgPFSyNhc.0/
 
 #
 # Users
 #
-user --name=user --password=$6$8DhoHJEYKOKUwjDR$T59RMqfCCKfRRll4MHY6c90uTlhtmURMMl3VdniKb7eW4Arl0HjA8c5GSLOIa6bIyKASrbM2cCUjzfn0On9nP1 --iscrypted 
+user --name=user --password=$6$3A2LxglrcG6ySQLu$k.4pDoF2IiuZNdYzK38/hGR7Zsg/3/HGWXQ8eNl9x9b0ag5W/hc2TjsRH4DBXzsAQaYTRqMBgX6bkCevThaKY. --iscrypted 
 
 #
 # Timezone
