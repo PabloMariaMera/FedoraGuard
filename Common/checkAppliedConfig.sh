@@ -413,7 +413,7 @@ check_configuration() {
 
     elif [ "$item" == "cockpit_installed" ]; then
         echo -n "Cockpit installed: "
-        if rpm -q cockpit &> /dev/null; then
+        if rpm -q cockpit &> /dev/null || rpm -q cockpit-system &> /dev/null ; then
             return 0  # Configurado
         else
             return 1  # No configurado
