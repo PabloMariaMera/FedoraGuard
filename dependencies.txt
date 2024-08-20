@@ -1,8 +1,8 @@
-1. Download the project
+1. Descargar proyecto
 
 > git clone https://github.com/PabloMariaMera/TFM.git
 
-2. Install dependencies:
+2. Instalar dependencias:
     python3
     wget
     genisoimage
@@ -17,8 +17,20 @@
 
 > sudo dnf install -y python3 wget genisoimage syslinux isomd5sum fuse pykickstart python3-tkinter python3-pillow-tk
 
-3. Run the application:
-    3a. Generate image:
-        ./FedoraGuard generate
-    3b. Apply hardening:
-        ./FedoraGuard applynow
+3. Dependencias bastionado sobre equipo ya desplegado:
+    3a. Fedora
+    	- Repositorio de Fedora en local o en línea.*
+    3b. Red Hat
+    	- Repositorios AppStream, BaseOS y EPEL configurados en local o en línea.*
+    3c. Común
+    	- Usuario sudoer en caso de establecer "allow_root = no" en Common/config.ini.
+
+    * Se instalarán los siguientes paquetes en caso de que no estén instalados: yum-utils, usbguard, clamav y cockpit
+
+4. Ejecutar la aplicación:
+    3a. Generar imagen:
+        ./FedoraGuard generar [-h] [--version {28,34}] [--iso ISO] {fedora,rhel}
+    3b. Aplicar bastionado al equipo:
+        ./FedoraGuard aplicarahora
+    3c. Abrir interfaz gráfica:
+    	./FedoraGuard gui
