@@ -83,7 +83,10 @@ class App:
         try:
             process = subprocess.Popen(["./FedoraGuard", "aplicarahora"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         except:
-            print("No se ha podido ejecutar. ¿Tienes Python 3.7 o superior?")
+            msg = "No se ha podido ejecutar. ¿Tienes Python 3.7 o superior?\nPuedes ejecutar './FedoraGuard aplicarahora' desde una terminal."
+            print(msg)
+            self.output_text.insert(tk.END, msg)
+            self.output_text.yview(tk.END)
             exit(1)
 
         # Read the output and update the Text widget in the new window
@@ -186,7 +189,10 @@ class App:
         try:
             process = subprocess.Popen(["python3", "-u", "GenerateISO/generateISO.py", option1, option2, option3], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         except:
-            print("No se ha podido ejecutar. ¿Tienes Python 3.7 o superior?")
+            msg = "No se ha podido ejecutar. ¿Tienes Python 3.7 o superior?\nPuedes ejecutar './FedoraGuard generar' desde una terminal."
+            print(msg)
+            self.output_text.insert(tk.END, msg)
+            self.output_text.yview(tk.END)
             exit(1)
 
         # Read the output and update the Text widget in the new window
@@ -709,6 +715,10 @@ class App:
 
 
 if __name__ == "__main__":
-    root = tk.Tk()
+    try:
+        root = tk.Tk()
+    except:
+        print("No se ha podido crear la ventana. ¿Tienes Python 3.7 o superior?\nPuedes ejecutar './FedoraGuard generar' o './FedoraGuard aplicarahora' desde una terminal.")
+        exit(1)
     app = App(root)
     root.mainloop()
