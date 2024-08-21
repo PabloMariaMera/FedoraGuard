@@ -36,4 +36,4 @@ def kickstart_to_bash(folder_path, output_file, config):
 
 if __name__ == "__main__":
     kickstart_to_bash("../GenerateISO/kickstarts/ccn-stic", "./script.sh")
-    #os.system("bash script.sh")
+    os.system("bash script.sh")
